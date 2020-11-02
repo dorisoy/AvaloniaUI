@@ -67,11 +67,7 @@ namespace Avalonia
 
 namespace Avalonia.Win32
 {
-    class Win32Platform : IPlatformThreadingInterface,
-        IPlatformSettings,
-        IWindowingPlatform,
-        IPlatformIconLoader,
-        IPlatformAutomationInterface
+    class Win32Platform : IPlatformThreadingInterface, IPlatformSettings, IWindowingPlatform, IPlatformIconLoader
     {
         private static readonly Win32Platform s_instance = new Win32Platform();
         private static Thread _uiThread;
@@ -118,7 +114,6 @@ namespace Avalonia.Win32
                 .Bind<IRenderTimer>().ToConstant(new DefaultRenderTimer(60))
                 .Bind<ISystemDialogImpl>().ToSingleton<SystemDialogImpl>()
                 .Bind<IWindowingPlatform>().ToConstant(s_instance)
-                .Bind<IPlatformAutomationInterface>().ToConstant(s_instance)
                 .Bind<PlatformHotkeyConfiguration>().ToSingleton<PlatformHotkeyConfiguration>()
                 .Bind<IPlatformIconLoader>().ToConstant(s_instance)
                 .Bind<NonPumpingLockHelper.IHelperImpl>().ToConstant(new NonPumpingSyncContext.HelperImpl())
@@ -277,11 +272,6 @@ namespace Avalonia.Win32
                 bitmap.Save(memoryStream);
                 return new IconImpl(new System.Drawing.Bitmap(memoryStream));
             }
-        }
-
-        public IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer)
-        {
-            return AutomationProviderFactory.Create(peer);
         }
 
         private static IconImpl CreateIconImpl(Stream stream)

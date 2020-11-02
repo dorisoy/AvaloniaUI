@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Avalonia.Controls.Platform;
+using Avalonia.Platform;
 using Avalonia.VisualTree;
 
 #nullable enable
@@ -19,6 +21,15 @@ namespace Avalonia.Controls.Automation.Peers
         {
             element = element ?? throw new ArgumentNullException("element");
             return element.GetOrCreateAutomationPeer();
+        }
+
+        protected override IAutomationPeerImpl CreatePlatformImplCore()
+        {
+            var root = Owner.GetVisualRoot() as TopLevel ??
+                throw new InvalidOperationException("Cannot create automation peer for non-rooted control.");
+            var factory = root.PlatformImpl as IPlatformAutomationInterface ??
+                throw new InvalidOperationException("UI Automation is not enabled for this platform.");
+            return factory.CreateAutomationPeerImpl(this);
         }
 
         protected override Rect GetBoundingRectangleCore()

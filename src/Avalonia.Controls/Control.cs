@@ -215,9 +215,10 @@ namespace Avalonia.Controls
                 return _automationPeer;
             }
 
-            _automationPeer = OnCreateAutomationPeer();
+            var peer = OnCreateAutomationPeer();
+            peer?.CreatePlatformImpl();
+            _automationPeer = peer;
             _automationPeerCreated = true;
-            _automationPeer?.CreatePlatformImpl();
             return _automationPeer;
         }
     }

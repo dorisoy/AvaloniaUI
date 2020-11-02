@@ -26,8 +26,10 @@ namespace Avalonia.Win32
     /// <summary>
     /// Window implementation for Win32 platform.
     /// </summary>
-    public partial class WindowImpl : IWindowImpl, EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo,
-        ITopLevelImplWithNativeControlHost
+    public partial class WindowImpl : IWindowImpl,
+        EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo,
+        ITopLevelImplWithNativeControlHost,
+        IPlatformAutomationInterface
     {
         private static readonly List<WindowImpl> s_instances = new List<WindowImpl>();
 
@@ -671,6 +673,11 @@ namespace Avalonia.Win32
                 SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOACTIVATE);
 
             _topmost = value;
+        }
+
+        public IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer)
+        {
+            return AutomationProviderFactory.Create(peer);
         }
 
         protected virtual IntPtr CreateWindowOverride(ushort atom)
