@@ -27,7 +27,7 @@ namespace Avalonia.Win32.Automation
 
             var result = peer switch
             {
-                AnonymousAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Custom, false, false),
+                AnonymousAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Group, false, false),
                 ButtonAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Button),
                 MenuAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Menu),
                 MenuItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.MenuItem),
