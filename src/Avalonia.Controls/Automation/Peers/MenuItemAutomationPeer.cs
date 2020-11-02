@@ -8,8 +8,6 @@ namespace Avalonia.Controls.Automation.Peers
     {
         public MenuItemAutomationPeer(Control owner) : base(owner) { }
 
-        protected override IReadOnlyList<AutomationPeer>? GetChildrenCore() => null;
-
         protected override string? GetNameCore()
         {
             var result = base.GetNameCore();

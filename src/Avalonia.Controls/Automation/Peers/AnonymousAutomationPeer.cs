@@ -10,5 +10,11 @@
             : base(owner)
         {
         }
+
+        protected override AutomationPeer GetPeerFromPointCore(Point point)
+        {
+            var result = base.GetPeerFromPointCore(point);
+            return result != this ? result : null;
+        }
     }
 }

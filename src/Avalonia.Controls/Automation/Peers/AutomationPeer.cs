@@ -46,7 +46,7 @@ namespace Avalonia.Controls.Automation.Peers
         /// <summary>
         /// Gets the child automation peers.
         /// </summary>
-        public IReadOnlyList<AutomationPeer> GetChildren() => GetChildrenCore();
+        public IReadOnlyList<AutomationPeer> GetChildren() => GetChildrenCore() ?? Array.Empty<AutomationPeer>();
 
         /// <summary>
         /// Gets a string that describes the class of the element.
@@ -84,7 +84,7 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract IAutomationPeerImpl CreatePlatformImplCore();
         protected abstract Rect GetBoundingRectangleCore();
         protected abstract int GetChildCountCore();
-        protected abstract IReadOnlyList<AutomationPeer> GetChildrenCore();
+        protected abstract IReadOnlyList<AutomationPeer>? GetChildrenCore();
         protected abstract string GetClassNameCore();
         protected abstract string? GetNameCore();
         protected abstract AutomationPeer? GetParentCore();
@@ -101,8 +101,9 @@ namespace Avalonia.Controls.Automation.Peers
         {
             foreach (var child in GetChildren())
             {
-                if (child.GetPeerFromPoint(point) is object)
-                    return child;
+                var found = child.GetPeerFromPoint(point);
+                if (found is object)
+                    return found;
             }
 
             return GetBoundingRectangle().Contains(point) ? this : null;

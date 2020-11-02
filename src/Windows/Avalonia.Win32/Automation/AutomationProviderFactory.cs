@@ -27,13 +27,14 @@ namespace Avalonia.Win32.Automation
 
             var result = peer switch
             {
-                ButtonAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Button, true),
-                MenuAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Menu, false),
-                MenuItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.MenuItem, true),
-                TabControlAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Tab, true),
-                TabItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.TabItem, true),
-                TextAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Text, true),
-                _ => new AutomationProvider(peer, UiaControlTypeId.Custom, true),
+                AnonymousAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Custom, false, false),
+                ButtonAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Button),
+                MenuAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Menu),
+                MenuItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.MenuItem),
+                TabControlAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Tab),
+                TabItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.TabItem),
+                TextAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Text),
+                _ => new AutomationProvider(peer, UiaControlTypeId.Custom),
             };
 
             var _ = result.Update();

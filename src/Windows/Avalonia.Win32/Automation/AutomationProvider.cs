@@ -21,6 +21,7 @@ namespace Avalonia.Win32.Automation
         ISelectionProvider
     {
         private readonly UiaControlTypeId _controlType;
+        private readonly bool _isControlElement;
         private readonly bool _isContentElement;
         private readonly WeakReference<AutomationPeer> _peer;
         private AutomationProvider? _parent;
@@ -37,12 +38,14 @@ namespace Avalonia.Win32.Automation
         public AutomationProvider(
             AutomationPeer peer,
             UiaControlTypeId controlType,
-            bool isContentElement)
+            bool isControlElement = true,
+            bool isContentElement = true)
         {
             Dispatcher.UIThread.VerifyAccess();
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = controlType;
+            _isControlElement = isControlElement;
             _isContentElement = isContentElement;
         }
 
@@ -52,7 +55,7 @@ namespace Avalonia.Win32.Automation
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = UiaControlTypeId.Window;
-            _isContentElement = true;
+            _isControlElement = _isContentElement = true;
         }
 
         public AutomationPeer Peer
@@ -117,7 +120,7 @@ namespace Avalonia.Win32.Automation
                 UiaPropertyId.ClassName => _className,
                 UiaPropertyId.ControlType => _controlType,
                 UiaPropertyId.IsContentElement => _isContentElement,
-                UiaPropertyId.IsControlElement => true,
+                UiaPropertyId.IsControlElement => _isControlElement,
                 UiaPropertyId.IsKeyboardFocusable => _isKeyboardFocusable,
                 UiaPropertyId.LocalizedControlType => _controlType.ToString().ToLowerInvariant(),
                 UiaPropertyId.Name => _name,

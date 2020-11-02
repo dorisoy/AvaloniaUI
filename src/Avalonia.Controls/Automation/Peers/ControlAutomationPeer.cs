@@ -68,21 +68,24 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override int GetChildCountCore() => ((IVisual)Owner).VisualChildren.Count;
 
-        protected override IReadOnlyList<AutomationPeer> GetChildrenCore()
+        protected override IReadOnlyList<AutomationPeer>? GetChildrenCore()
         {
             var visualChildren = ((IVisual)Owner).VisualChildren;
 
-            _children ??= new List<AutomationPeer>();
-
             if (!_childrenValid)
             {
+                if (_children is null && visualChildren.Count > 0)
+                {
+                    _children = new List<AutomationPeer>();
+                }
+
                 for (var i = 0; i < visualChildren.Count; ++i)
                 {
                     if (visualChildren[i] is Control c)
                     {
                         var peer = GetOrCreatePeer(c);
 
-                        if (_children.Count <= i)
+                        if (_children!.Count <= i)
                         {
                             _children.Add(peer);
                         }
@@ -93,7 +96,7 @@ namespace Avalonia.Controls.Automation.Peers
                     }
                 }
 
-                if (_children.Count > visualChildren.Count)
+                if (_children?.Count > visualChildren.Count)
                 {
                     _children.RemoveRange(visualChildren.Count, _children.Count - visualChildren.Count);
                 }
@@ -109,22 +112,12 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override AutomationPeer? GetParentCore()
         {
-            var parent = Owner.Parent;
-
-            while (parent is object)
+            return Owner.GetVisualParent() switch
             {
-                if (parent is Control controlParent)
-                {
-                    var result = GetOrCreatePeer(controlParent);
-
-                    if (result is object)
-                        return result;
-                }
-
-                parent = parent.Parent;
-            }
-
-            throw new InvalidOperationException("Cannot find parent automation peer.");
+                Control c => GetOrCreatePeer(c),
+                null => null,
+                _ => throw new NotSupportedException("Don't know how to create a peer for non-Control."),
+            };
         }
 
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
