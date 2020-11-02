@@ -97,6 +97,8 @@ namespace Avalonia.Win32.Automation
         bool ISelectionProvider.IsSelectionRequired => _selectionMode.HasFlagCustom(SelectionMode.AlwaysSelected);
 
         public void Dispose() { }
+        public void PropertyChanged() { }
+        public void StructureChanged() { }
 
         [return: MarshalAs(UnmanagedType.IUnknown)]
         public virtual object? GetPatternProvider(int patternId)

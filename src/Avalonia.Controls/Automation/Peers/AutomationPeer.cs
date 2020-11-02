@@ -11,12 +11,7 @@ namespace Avalonia.Controls.Automation.Peers
     /// </summary>
     public abstract class AutomationPeer : IDisposable
     {
-        private AutomationPeer? _parent;
-        private IReadOnlyList<AutomationPeer>? _children;
-        private bool _parentValid;
-        private bool _childrenValid;
-
-        ~AutomationPeer() => Dispose();
+        ~AutomationPeer() => Dispose(false);
 
         /// <summary>
         /// Gets the platform implementation of the automation peer.
@@ -24,12 +19,16 @@ namespace Avalonia.Controls.Automation.Peers
         public IAutomationPeerImpl? PlatformImpl { get; private set; }
 
         /// <summary>
+        /// Gets a value describing whether the automation peer has been disposed.
+        /// </summary>
+        public bool IsDisposed => PlatformImpl is null;
+
+        /// <summary>
         /// Releases all resources used by the automation peer.
         /// </summary>
         public void Dispose()
         {
-            PlatformImpl?.Dispose();
-            PlatformImpl = null;
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
@@ -40,19 +39,14 @@ namespace Avalonia.Controls.Automation.Peers
         public Rect GetBoundingRectangle() => GetBoundingRectangleCore();
 
         /// <summary>
-        /// Gets the collection of elements that are represented in the UI Automation tree as
-        /// immediate child elements of the automation peer.
+        /// Gets the number of child automation peers.
         /// </summary>
-        public IReadOnlyList<AutomationPeer> GetChildren()
-        {
-            if (!_childrenValid)
-            {
-                _children = GetChildrenCore();
-                _childrenValid = true;
-            }
+        public int GetChildCount() => GetChildCountCore();
 
-            return _children ?? Array.Empty<AutomationPeer>();
-        }
+        /// <summary>
+        /// Gets the child automation peers.
+        /// </summary>
+        public IReadOnlyList<AutomationPeer> GetChildren() => GetChildrenCore();
 
         /// <summary>
         /// Gets a string that describes the class of the element.
@@ -64,58 +58,55 @@ namespace Avalonia.Controls.Automation.Peers
         /// </summary>
         public string GetName() => GetNameCore() ?? string.Empty;
 
-        public AutomationPeer? GetParent()
-        {
-            if (!_parentValid)
-            {
-                _parent = GetParentCore();
-                _parentValid = true;
-            }
+        /// <summary>
+        /// Gets the <see cref="AutomationPeer"/> that is the parent of this <see cref="AutomationPeer"/>.
+        /// </summary>
+        /// <returns></returns>
+        public AutomationPeer? GetParent() => GetParentCore();
 
-            return _parent;
-        }
-
+        /// <summary>
+        /// Gets an <see cref="AutomationPeer"/> from the specified point.
+        /// </summary>
+        /// <param name="point">The point, in window coordinates.</param>
         public AutomationPeer? GetPeerFromPoint(Point point) => GetPeerFromPointCore(point);
 
-        public Rect GetVisibleBoundingRect() => GetVisibleBoundingRectCore();
-
+        /// <summary>
+        /// Gets a value that indicates whether the element can accept keyboard focus.
+        /// </summary>
+        /// <returns></returns>
         public bool IsKeyboardFocusable() => IsKeyboardFocusableCore();
 
+        /// <summary>
+        /// Sets the keyboard focus on the element that is associated with this automation peer.
+        /// </summary>
         public void SetFocus() => SetFocusCore();
 
         protected abstract IAutomationPeerImpl CreatePlatformImplCore();
         protected abstract Rect GetBoundingRectangleCore();
-        protected abstract IReadOnlyList<AutomationPeer>? GetChildrenCore();
+        protected abstract int GetChildCountCore();
+        protected abstract IReadOnlyList<AutomationPeer> GetChildrenCore();
         protected abstract string GetClassNameCore();
         protected abstract string? GetNameCore();
         protected abstract AutomationPeer? GetParentCore();
         protected abstract bool IsKeyboardFocusableCore();
         protected abstract void SetFocusCore();
 
-        protected virtual AutomationPeer? GetPeerFromPointCore(Point point)
+        protected virtual void Dispose(bool disposing)
         {
-            AutomationPeer? found = null;
-
-            foreach (var child in GetChildren())
-            {
-                found = child.GetPeerFromPoint(point);
-
-                if (found is object)
-                    break;
-            }
-
-            if (found is null)
-            {
-                var bounds = GetVisibleBoundingRect();
-
-                if (bounds.Contains(point))
-                    found = this;
-            }
-
-            return found;
+            PlatformImpl?.Dispose();
+            PlatformImpl = null;
         }
 
-        protected virtual Rect GetVisibleBoundingRectCore() => GetBoundingRectangleCore();
+        protected virtual AutomationPeer? GetPeerFromPointCore(Point point)
+        {
+            foreach (var child in GetChildren())
+            {
+                if (child.GetPeerFromPoint(point) is object)
+                    return child;
+            }
+
+            return GetBoundingRectangle().Contains(point) ? this : null;
+        }
 
         internal void CreatePlatformImpl()
         {

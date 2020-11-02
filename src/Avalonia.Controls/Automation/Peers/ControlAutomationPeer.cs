@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using Avalonia.Controls.Platform;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
@@ -10,9 +11,15 @@ namespace Avalonia.Controls.Automation.Peers
 {
     public abstract class ControlAutomationPeer : AutomationPeer
     {
+        private List<AutomationPeer>? _children;
+        private bool _childrenValid;
+
         public ControlAutomationPeer(Control owner)
         {
             Owner = owner ?? throw new ArgumentNullException("owner");
+
+            var visualChildren = ((IVisual)owner).VisualChildren;
+            visualChildren.CollectionChanged += VisualChildrenChanged;
         }
 
         public Control Owner { get; }
@@ -32,6 +39,18 @@ namespace Avalonia.Controls.Automation.Peers
             return factory.CreateAutomationPeerImpl(this);
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            if (!IsDisposed)
+            {
+                var visualChildren = ((IVisual)Owner).VisualChildren;
+                visualChildren.CollectionChanged -= VisualChildrenChanged;
+                _children = null;
+            }
+        }
+
         protected override Rect GetBoundingRectangleCore()
         {
             var root = Owner.GetVisualRoot();
@@ -47,7 +66,44 @@ namespace Avalonia.Controls.Automation.Peers
             return Owner.Bounds.TransformToAABB(t.Value);
         }
 
-        protected override IReadOnlyList<AutomationPeer>? GetChildrenCore() => GetChildren(Owner);
+        protected override int GetChildCountCore() => ((IVisual)Owner).VisualChildren.Count;
+
+        protected override IReadOnlyList<AutomationPeer> GetChildrenCore()
+        {
+            var visualChildren = ((IVisual)Owner).VisualChildren;
+
+            _children ??= new List<AutomationPeer>();
+
+            if (!_childrenValid)
+            {
+                for (var i = 0; i < visualChildren.Count; ++i)
+                {
+                    if (visualChildren[i] is Control c)
+                    {
+                        var peer = GetOrCreatePeer(c);
+
+                        if (_children.Count <= i)
+                        {
+                            _children.Add(peer);
+                        }
+                        else
+                        {
+                            _children[i] = peer;
+                        }
+                    }
+                }
+
+                if (_children.Count > visualChildren.Count)
+                {
+                    _children.RemoveRange(visualChildren.Count, _children.Count - visualChildren.Count);
+                }
+
+                _childrenValid = true;
+            }
+
+            return _children;
+        }
+
         protected override string GetClassNameCore() => Owner.GetType().Name;
         protected override string? GetNameCore() => AutomationProperties.GetName(Owner);
 
@@ -74,33 +130,13 @@ namespace Avalonia.Controls.Automation.Peers
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
 
-        protected static IReadOnlyList<AutomationPeer>? GetChildren(IVisual control)
+        private void VisualChildrenChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            List<AutomationPeer>? children = null;
-
-            static void Iterate(IVisual parent, ref List<AutomationPeer>? result)
+            if (!IsDisposed)
             {
-                foreach (var child in parent.VisualChildren)
-                {
-                    AutomationPeer? peer = null;
-
-                    if (child is Control control)
-                        peer = GetOrCreatePeer(control);
-
-                    if (peer is object)
-                    {
-                        result ??= new List<AutomationPeer>();
-                        result.Add(peer);
-                    }
-                    else
-                    {
-                        Iterate(child, ref result);
-                    }
-                }
+                _childrenValid = false;
+                PlatformImpl!.StructureChanged();
             }
-
-            Iterate(control, ref children);
-            return children;
         }
     }
 }

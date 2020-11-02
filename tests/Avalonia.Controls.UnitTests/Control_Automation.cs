@@ -19,7 +19,7 @@ namespace Avalonia.Controls.UnitTests
             var peer = ControlAutomationPeer.GetOrCreatePeer(target);
 
             Assert.IsType<TestAutomationPeer>(peer);
-            Assert.IsType<TestAutomationPeerImpl>(peer.PlatformImpl);
+            Assert.NotNull(peer.PlatformImpl);
         }
 
         [Fact]
@@ -38,6 +38,7 @@ namespace Avalonia.Controls.UnitTests
 
             root.Content = null;
 
+            Assert.True(peer.IsDisposed);
             Assert.Null(peer.PlatformImpl);
             Assert.Throws<InvalidOperationException>(() => ControlAutomationPeer.GetOrCreatePeer(target));
         }
@@ -69,12 +70,6 @@ namespace Avalonia.Controls.UnitTests
             public TestAutomationPeer(Control owner) : base(owner) { }
         }
 
-        private class TestAutomationPeerImpl : IAutomationPeerImpl
-        {
-            public IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer) => new TestAutomationPeerImpl();
-            public void Dispose() { }
-        }
-
         private class AutomationTestRoot : TopLevel
         {
             public AutomationTestRoot() : base(CreateImpl()) 
@@ -94,7 +89,7 @@ namespace Avalonia.Controls.UnitTests
                 var mock = new Mock<ITopLevelImpl>();
                 var ifs = mock.As<IPlatformAutomationInterface>();
                 ifs.Setup(x => x.CreateAutomationPeerImpl(It.IsAny<AutomationPeer>()))
-                    .Returns(() => new TestAutomationPeerImpl());
+                    .Returns(() => Mock.Of<IAutomationPeerImpl>());
                 return mock.Object;
             }
         }
