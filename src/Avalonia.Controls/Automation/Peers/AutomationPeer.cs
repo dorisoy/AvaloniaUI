@@ -71,6 +71,11 @@ namespace Avalonia.Controls.Automation.Peers
         public AutomationPeer? GetPeerFromPoint(Point point) => GetPeerFromPointCore(point);
 
         /// <summary>
+        /// Gets a value indicating whether the control is hidden from the default UI automation tree.
+        /// </summary>
+        public bool IsHidden() => IsHiddenCore();
+
+        /// <summary>
         /// Gets a value that indicates whether the element can accept keyboard focus.
         /// </summary>
         /// <returns></returns>
@@ -88,6 +93,7 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract string GetClassNameCore();
         protected abstract string? GetNameCore();
         protected abstract AutomationPeer? GetParentCore();
+        protected abstract bool IsHiddenCore();
         protected abstract bool IsKeyboardFocusableCore();
         protected abstract void SetFocusCore();
 

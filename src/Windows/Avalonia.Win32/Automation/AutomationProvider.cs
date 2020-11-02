@@ -21,9 +21,8 @@ namespace Avalonia.Win32.Automation
         ISelectionProvider
     {
         private readonly UiaControlTypeId _controlType;
-        private readonly bool _isControlElement;
-        private readonly bool _isContentElement;
         private readonly WeakReference<AutomationPeer> _peer;
+        private readonly bool _isHidden;
         private AutomationProvider? _parent;
         private IRawElementProviderFragmentRoot? _fragmentRoot;
         private Rect _boundingRect;
@@ -37,16 +36,13 @@ namespace Avalonia.Win32.Automation
 
         public AutomationProvider(
             AutomationPeer peer,
-            UiaControlTypeId controlType,
-            bool isControlElement = true,
-            bool isContentElement = true)
+            UiaControlTypeId controlType)
         {
             Dispatcher.UIThread.VerifyAccess();
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = controlType;
-            _isControlElement = isControlElement;
-            _isContentElement = isContentElement;
+            _isHidden = peer.IsHidden();
         }
 
         protected AutomationProvider(AutomationPeer peer)
@@ -55,7 +51,6 @@ namespace Avalonia.Win32.Automation
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = UiaControlTypeId.Window;
-            _isControlElement = _isContentElement = true;
         }
 
         public AutomationPeer Peer
@@ -119,8 +114,8 @@ namespace Avalonia.Win32.Automation
             {
                 UiaPropertyId.ClassName => _className,
                 UiaPropertyId.ControlType => _controlType,
-                UiaPropertyId.IsContentElement => _isContentElement,
-                UiaPropertyId.IsControlElement => _isControlElement,
+                UiaPropertyId.IsContentElement => !_isHidden,
+                UiaPropertyId.IsControlElement => !_isHidden,
                 UiaPropertyId.IsKeyboardFocusable => _isKeyboardFocusable,
                 UiaPropertyId.LocalizedControlType => _controlType.ToString().ToLowerInvariant(),
                 UiaPropertyId.Name => _name,

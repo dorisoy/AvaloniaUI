@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Avalonia.Controls.Platform;
+using Avalonia.LogicalTree;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
 
@@ -18,8 +19,8 @@ namespace Avalonia.Controls.Automation.Peers
         {
             Owner = owner ?? throw new ArgumentNullException("owner");
 
-            var visualChildren = ((IVisual)owner).VisualChildren;
-            visualChildren.CollectionChanged += VisualChildrenChanged;
+            var logicalChildren = ((ILogical)owner).LogicalChildren;
+            logicalChildren.CollectionChanged += LogicalChildrenChanged;
         }
 
         public Control Owner { get; }
@@ -45,8 +46,8 @@ namespace Avalonia.Controls.Automation.Peers
 
             if (!IsDisposed)
             {
-                var visualChildren = ((IVisual)Owner).VisualChildren;
-                visualChildren.CollectionChanged -= VisualChildrenChanged;
+                var logicalChildren = ((ILogical)Owner).LogicalChildren;
+                logicalChildren.CollectionChanged -= LogicalChildrenChanged;
                 _children = null;
             }
         }
@@ -70,18 +71,18 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override IReadOnlyList<AutomationPeer>? GetChildrenCore()
         {
-            var visualChildren = ((IVisual)Owner).VisualChildren;
+            var logicalChildren = ((ILogical)Owner).LogicalChildren;
 
             if (!_childrenValid)
             {
-                if (_children is null && visualChildren.Count > 0)
+                if (_children is null && logicalChildren.Count > 0)
                 {
                     _children = new List<AutomationPeer>();
                 }
 
-                for (var i = 0; i < visualChildren.Count; ++i)
+                for (var i = 0; i < logicalChildren.Count; ++i)
                 {
-                    if (visualChildren[i] is Control c)
+                    if (logicalChildren[i] is Control c && ((IVisual)c).IsAttachedToVisualTree)
                     {
                         var peer = GetOrCreatePeer(c);
 
@@ -96,9 +97,9 @@ namespace Avalonia.Controls.Automation.Peers
                     }
                 }
 
-                if (_children?.Count > visualChildren.Count)
+                if (_children?.Count > logicalChildren.Count)
                 {
-                    _children.RemoveRange(visualChildren.Count, _children.Count - visualChildren.Count);
+                    _children.RemoveRange(logicalChildren.Count, _children.Count - logicalChildren.Count);
                 }
 
                 _childrenValid = true;
@@ -112,18 +113,19 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override AutomationPeer? GetParentCore()
         {
-            return Owner.GetVisualParent() switch
+            return Owner.Parent switch
             {
                 Control c => GetOrCreatePeer(c),
                 null => null,
-                _ => throw new NotSupportedException("Don't know how to create a peer for non-Control."),
+                _ => throw new NotSupportedException("Don't know how to create a peer for a non-Control parent."),
             };
         }
 
+        protected override bool IsHiddenCore() => false;
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
 
-        private void VisualChildrenChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void LogicalChildrenChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (!IsDisposed)
             {

@@ -1,5 +1,4 @@
-﻿using System;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Automation.Peers;
 using Avalonia.Threading;
 using Avalonia.Win32.Interop.Automation;
@@ -25,18 +24,19 @@ namespace Avalonia.Win32.Automation
                 return new WindowProvider(windowImpl, windowPeer);
             }
 
-            var result = peer switch
+            var controlType = peer switch
             {
-                AnonymousAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Group, false, false),
-                ButtonAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Button),
-                MenuAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Menu),
-                MenuItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.MenuItem),
-                TabControlAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Tab),
-                TabItemAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.TabItem),
-                TextAutomationPeer _ => new AutomationProvider(peer, UiaControlTypeId.Text),
-                _ => new AutomationProvider(peer, UiaControlTypeId.Custom),
+                AnonymousAutomationPeer _ => UiaControlTypeId.Group,
+                ButtonAutomationPeer _ => UiaControlTypeId.Button,
+                MenuAutomationPeer _ => UiaControlTypeId.Menu,
+                MenuItemAutomationPeer _ => UiaControlTypeId.MenuItem,
+                TabControlAutomationPeer _ => UiaControlTypeId.Tab,
+                TabItemAutomationPeer _ => UiaControlTypeId.TabItem,
+                TextAutomationPeer _ => UiaControlTypeId.Text,
+                _ => UiaControlTypeId.Custom,
             };
 
+            var result = new AutomationProvider(peer, controlType);
             var _ = result.Update();
             return result;
         }

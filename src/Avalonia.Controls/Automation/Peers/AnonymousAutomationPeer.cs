@@ -16,5 +16,7 @@
             var result = base.GetPeerFromPointCore(point);
             return result != this ? result : null;
         }
+
+        protected override bool IsHiddenCore() => true;
     }
 }
