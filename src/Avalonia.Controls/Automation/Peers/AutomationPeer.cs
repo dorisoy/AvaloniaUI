@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Avalonia.Controls.Platform;
 using Avalonia.Platform;
 
 #nullable enable
@@ -10,17 +9,29 @@ namespace Avalonia.Controls.Automation.Peers
     /// <summary>
     /// Provides a base class that exposes an element to UI Automation.
     /// </summary>
-    public abstract class AutomationPeer
+    public abstract class AutomationPeer : IDisposable
     {
         private AutomationPeer? _parent;
         private IReadOnlyList<AutomationPeer>? _children;
         private bool _parentValid;
         private bool _childrenValid;
 
+        ~AutomationPeer() => Dispose();
+
         /// <summary>
         /// Gets the platform implementation of the automation peer.
         /// </summary>
         public IAutomationPeerImpl? PlatformImpl { get; private set; }
+
+        /// <summary>
+        /// Releases all resources used by the automation peer.
+        /// </summary>
+        public void Dispose()
+        {
+            PlatformImpl?.Dispose();
+            PlatformImpl = null;
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Gets the bounding rectangle of the element that is associated with the automation peer

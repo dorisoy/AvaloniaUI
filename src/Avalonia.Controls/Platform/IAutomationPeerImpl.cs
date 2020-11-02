@@ -1,6 +1,8 @@
-﻿namespace Avalonia.Platform
+﻿using System;
+
+namespace Avalonia.Platform
 {
-    public interface IAutomationPeerImpl
+    public interface IAutomationPeerImpl : IDisposable
     {
     }
 }

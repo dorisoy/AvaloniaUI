@@ -17,7 +17,7 @@ namespace Avalonia.Controls.Automation.Peers
 
         public Control Owner { get; }
 
-        public static AutomationPeer? GetOrCreatePeer(Control element)
+        public static AutomationPeer GetOrCreatePeer(Control element)
         {
             element = element ?? throw new ArgumentNullException("element");
             return element.GetOrCreateAutomationPeer();

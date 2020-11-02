@@ -3,12 +3,13 @@ using System.ComponentModel;
 using Avalonia.Controls.Automation.Peers;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
-using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Rendering;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+
+#nullable enable
 
 namespace Avalonia.Controls
 {
@@ -46,10 +47,9 @@ namespace Avalonia.Controls
         public static readonly RoutedEvent<RequestBringIntoViewEventArgs> RequestBringIntoViewEvent =
             RoutedEvent.Register<Control, RequestBringIntoViewEventArgs>("RequestBringIntoView", RoutingStrategies.Bubble);
 
-        private DataTemplates _dataTemplates;
-        private IControl _focusAdorner;
-        private AutomationPeer _automationPeer;
-        private bool _automationPeerCreated;
+        private DataTemplates? _dataTemplates;
+        private IControl? _focusAdorner;
+        private AutomationPeer? _automationPeer;
 
         /// <summary>
         /// Gets or sets the control's focus adorner.
@@ -87,7 +87,7 @@ namespace Avalonia.Controls
             set { SetValue(TagProperty, value); }
         }
 
-        public new IControl Parent => (IControl)base.Parent;
+        public new IControl? Parent => (IControl?)base.Parent;
 
         /// <inheritdoc/>
         bool IDataTemplateHost.IsDataTemplatesInitialized => _dataTemplates != null;
@@ -152,6 +152,8 @@ namespace Avalonia.Controls
         protected sealed override void OnDetachedFromVisualTreeCore(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTreeCore(e);
+            _automationPeer?.Dispose();
+            _automationPeer = null;
         }
 
         /// <inheritdoc/>
@@ -204,21 +206,21 @@ namespace Avalonia.Controls
             }
         }
 
-        protected virtual AutomationPeer OnCreateAutomationPeer() => null;
+        protected virtual AutomationPeer OnCreateAutomationPeer() => new AnonymousAutomationPeer(this);
 
         internal AutomationPeer GetOrCreateAutomationPeer()
         {
             VerifyAccess();
 
-            if (_automationPeerCreated)
+            if (_automationPeer is object)
             {
                 return _automationPeer;
             }
 
-            var peer = OnCreateAutomationPeer();
-            peer?.CreatePlatformImpl();
+            var peer = OnCreateAutomationPeer() ??
+                throw new InvalidOperationException("OnCreateAutomationPeer returned null.");
+            peer.CreatePlatformImpl();
             _automationPeer = peer;
-            _automationPeerCreated = true;
             return _automationPeer;
         }
     }
