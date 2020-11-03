@@ -2,7 +2,7 @@
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public class TabItemAutomationPeer : ContentControlAutomationPeer
+    public class TabItemAutomationPeer : ContentControlAutomationPeerBase
     {
         public TabItemAutomationPeer(Control owner) : base(owner) { }
    }

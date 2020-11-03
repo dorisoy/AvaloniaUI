@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public class ButtonAutomationPeer : ContentControlAutomationPeer
+    public class ButtonAutomationPeer : ContentControlAutomationPeerBase
     {
         public ButtonAutomationPeer(Control owner): base(owner) {}
     }
