@@ -344,6 +344,8 @@ namespace Avalonia.Controls
             }
         }
 
+        internal void PerformClick() => OnClick();
+
         /// <summary>
         /// Called when the <see cref="Command"/> property changes.
         /// </summary>

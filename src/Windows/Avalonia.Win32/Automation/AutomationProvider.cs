@@ -19,6 +19,7 @@ namespace Avalonia.Win32.Automation
         IAutomationPeerImpl,
         IRawElementProviderSimple,
         IRawElementProviderFragment,
+        IInvokeProvider,
         ISelectionProvider
     {
         private readonly UiaControlTypeId _controlType;
@@ -32,7 +33,8 @@ namespace Avalonia.Win32.Automation
         private string? _className;
         private bool _isKeyboardFocusable;
         private string? _name;
-        private SelectionMode _selectionMode;
+        private bool _canSelectMultiple;
+        private bool _isSelectionRequired;
         private IRawElementProviderSimple[]? _selection;
         private bool _isDisposed;
 
@@ -77,7 +79,6 @@ namespace Avalonia.Win32.Automation
                     Window.PointToScreen(_boundingRect.TopLeft),
                     Window.PointToScreen(_boundingRect.BottomRight))
                     .ToRect(1);
-
             }
         }
 
@@ -93,11 +94,16 @@ namespace Avalonia.Win32.Automation
         public ProviderOptions ProviderOptions => ProviderOptions.ServerSideProvider;
         public WindowImpl? Window => (FragmentRoot as WindowProvider)?.Owner;
         public virtual IRawElementProviderSimple? HostRawElementProvider => null;
-        bool ISelectionProvider.CanSelectMultiple => _selectionMode.HasFlagCustom(SelectionMode.Multiple);
-        bool ISelectionProvider.IsSelectionRequired => _selectionMode.HasFlagCustom(SelectionMode.AlwaysSelected);
+        bool ISelectionProvider.CanSelectMultiple => _canSelectMultiple;
+        bool ISelectionProvider.IsSelectionRequired => _isSelectionRequired;
 
         public void Dispose() => _isDisposed = true;
-        public void PropertyChanged() { }
+        
+        public void PropertyChanged() 
+        {
+            Dispatcher.UIThread.VerifyAccess();
+            UpdateCore(true);
+        }
         
         public void StructureChanged() 
         {
@@ -110,6 +116,7 @@ namespace Avalonia.Win32.Automation
         {
             return (UiaPatternId)patternId switch
             {
+                UiaPatternId.Invoke => Peer is IInvocableAutomationPeer ? this : null,
                 UiaPatternId.Selection => Peer is ISelectingAutomationPeer ? this : null,
                 _ => null,
             };
@@ -156,17 +163,24 @@ namespace Avalonia.Win32.Automation
             InvokeSync(() => Peer.SetFocus());
         }
 
-        public async Task Update()
+        public async Task Update(bool notify)
         {
             if (Dispatcher.UIThread.CheckAccess())
-                UpdateCore();
+                UpdateCore(notify);
             else
-                await Dispatcher.UIThread.InvokeAsync(() => Update());
+                await Dispatcher.UIThread.InvokeAsync(() => Update(notify));
         }
 
         public override string ToString() => _className!;
 
         IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots() => null;
+
+        void IInvokeProvider.Invoke()
+        {
+            if (Peer is IInvocableAutomationPeer i)
+                InvokeSync(() => i.Invoke());
+        }
+
         IRawElementProviderSimple[] ISelectionProvider.GetSelection() => _selection ?? Array.Empty<IRawElementProviderSimple>();
 
         protected void InvokeSync(Action action)
@@ -200,21 +214,46 @@ namespace Avalonia.Win32.Automation
             }
         }
 
-        protected virtual void UpdateCore()
+        protected virtual void UpdateCore(bool notify)
         {
-            _boundingRect = Peer.GetBoundingRectangle();
+            notify &= UiaCoreProviderApi.UiaClientsAreListening();
+
             _className = Peer.GetClassName();
-            _isKeyboardFocusable = Peer.IsKeyboardFocusable();
-            _name = Peer.GetName();
+
+            UpdateProperty(UiaPropertyId.BoundingRectangle, ref _boundingRect, Peer.GetBoundingRectangle(), notify);
+            UpdateProperty(UiaPropertyId.IsKeyboardFocusable, ref _isKeyboardFocusable, Peer.IsKeyboardFocusable(), notify);
+            UpdateProperty(UiaPropertyId.Name, ref _name, Peer.GetName(), notify);
 
             if (Peer is ISelectingAutomationPeer selectionPeer)
             {
                 var selection = selectionPeer.GetSelection();
+                var selectionMode = selectionPeer.GetSelectionMode();
 
-                _selectionMode = selectionPeer.GetSelectionMode();
-                _selection = selection.Count > 0 ?
-                    selection.Select(x => (IRawElementProviderSimple)x.PlatformImpl!).ToArray() :
-                    null;
+                UpdateProperty(
+                    UiaPropertyId.SelectionCanSelectMultiple,
+                    ref _canSelectMultiple, 
+                    selectionMode.HasFlagCustom(SelectionMode.Multiple),
+                    notify);
+                UpdateProperty(
+                    UiaPropertyId.SelectionIsSelectionRequired,
+                    ref _isSelectionRequired,
+                    selectionMode.HasFlagCustom(SelectionMode.AlwaysSelected),
+                    notify);
+                UpdateProperty(
+                    UiaPropertyId.SelectionSelection,
+                    ref _selection,
+                    selection.Select(x => (IRawElementProviderSimple)x.PlatformImpl!).ToArray(),
+                    notify);
+            }
+        }
+
+        private void UpdateProperty<T>(UiaPropertyId id, ref T _field, T value, bool notify)
+        {
+            if (!EqualityComparer<T>.Default.Equals(_field, value))
+            {
+                _field = value;
+                if (notify)
+                    UiaCoreProviderApi.UiaRaiseAutomationPropertyChangedEvent(this, (int)id, null, null);
             }
         }
 

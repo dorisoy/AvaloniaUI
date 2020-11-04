@@ -30,6 +30,7 @@ namespace Avalonia.Win32.Automation
                 ButtonAutomationPeer _ => UiaControlTypeId.Button,
                 MenuAutomationPeer _ => UiaControlTypeId.Menu,
                 MenuItemAutomationPeer _ => UiaControlTypeId.MenuItem,
+                SliderAutomationPeer _ => UiaControlTypeId.Slider,
                 TabControlAutomationPeer _ => UiaControlTypeId.Tab,
                 TabItemAutomationPeer _ => UiaControlTypeId.TabItem,
                 TextAutomationPeer _ => UiaControlTypeId.Text,
@@ -37,7 +38,7 @@ namespace Avalonia.Win32.Automation
             };
 
             var result = new AutomationProvider(peer, controlType);
-            var _ = result.Update();
+            var _ = result.Update(notify: false);
             return result;
         }
     }

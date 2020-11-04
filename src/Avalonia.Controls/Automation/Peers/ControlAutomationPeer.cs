@@ -18,11 +18,13 @@ namespace Avalonia.Controls.Automation.Peers
 
         public ControlAutomationPeer(Control owner)
         {
-            Owner = owner ?? throw new ArgumentNullException("owner");
-            _invalidateChildren = InvalidateChildren;
+            _invalidateChildren = InvalidateStructure;
 
+            Owner = owner ?? throw new ArgumentNullException("owner");
+            owner.PropertyChanged += OwnerPropertyChanged;
+            
             var logicalChildren = ((ILogical)owner).LogicalChildren;
-            logicalChildren.CollectionChanged += InvalidateChildren;
+            logicalChildren.CollectionChanged += InvalidateStructure;
         }
 
         public Control Owner { get; }
@@ -48,8 +50,10 @@ namespace Avalonia.Controls.Automation.Peers
 
             if (!IsDisposed)
             {
+                Owner.PropertyChanged -= OwnerPropertyChanged;
+
                 var logicalChildren = ((ILogical)Owner).LogicalChildren;
-                logicalChildren.CollectionChanged -= InvalidateChildren;
+                logicalChildren.CollectionChanged -= InvalidateStructure;
                 _children = null;
             }
         }
@@ -66,7 +70,7 @@ namespace Avalonia.Controls.Automation.Peers
             if (!t.HasValue)
                 return Rect.Empty;
 
-            return Owner.Bounds.TransformToAABB(t.Value);
+            return new Rect(Owner.Bounds.Size).TransformToAABB(t.Value);
         }
 
         protected override int GetChildCountCore()
@@ -157,7 +161,16 @@ namespace Avalonia.Controls.Automation.Peers
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
 
-        private void InvalidateChildren()
+        private void InvalidateProperties()
+        {
+            if (!IsDisposed)
+            {
+                _childrenValid = false;
+                PlatformImpl!.PropertyChanged();
+            }
+        }
+
+        private void InvalidateStructure()
         {
             if (!IsDisposed)
             {
@@ -166,7 +179,17 @@ namespace Avalonia.Controls.Automation.Peers
             }
         }
 
-        private void InvalidateChildren(object sender, EventArgs e) => InvalidateChildren();
+        private void InvalidateStructure(object sender, EventArgs e) => InvalidateStructure();
+
+        private void OwnerPropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
+        {
+            switch (e.Property.Name)
+            {
+                case nameof(Visual.TransformedBounds):
+                    InvalidateProperties();
+                    break;
+            }
+        }
     }
 }
 

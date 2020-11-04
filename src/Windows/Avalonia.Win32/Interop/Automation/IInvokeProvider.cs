@@ -12,7 +12,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("54fcb24b-e18e-47a2-b4d3-eccbe77599a2")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IInvokeProvider
+    public interface IInvokeProvider
     {
         void Invoke();
     }
