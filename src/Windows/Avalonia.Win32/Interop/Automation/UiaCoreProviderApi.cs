@@ -26,6 +26,8 @@ namespace Avalonia.Win32.Interop.Automation
 
     internal static class UiaCoreProviderApi
     {
+        public const int UIA_E_ELEMENTNOTENABLED = unchecked((int)0x80040200);
+
         [DllImport("UIAutomationCore.dll", CharSet = CharSet.Unicode)]
         public static extern bool UiaClientsAreListening();
         

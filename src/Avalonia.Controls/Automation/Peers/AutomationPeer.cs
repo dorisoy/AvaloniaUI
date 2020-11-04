@@ -71,6 +71,11 @@ namespace Avalonia.Controls.Automation.Peers
         public AutomationPeer? GetPeerFromPoint(Point point) => GetPeerFromPointCore(point);
 
         /// <summary>
+        /// Gets a value indicating whether the control is enabled for user interaction.
+        /// </summary>
+        public bool IsEnabled() => IsEnabledCore();
+
+        /// <summary>
         /// Gets a value indicating whether the control is hidden from the default UI automation tree.
         /// </summary>
         public bool IsHidden() => IsHiddenCore();
@@ -93,6 +98,7 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract string GetClassNameCore();
         protected abstract string? GetNameCore();
         protected abstract AutomationPeer? GetParentCore();
+        protected abstract bool IsEnabledCore();
         protected abstract bool IsHiddenCore();
         protected abstract bool IsKeyboardFocusableCore();
         protected abstract void SetFocusCore();
@@ -113,6 +119,12 @@ namespace Avalonia.Controls.Automation.Peers
             }
 
             return GetBoundingRectangle().Contains(point) ? this : null;
+        }
+
+        protected void EnsureEnabled()
+        {
+            if (!IsEnabled())
+                throw new ElementNotEnabledException();
         }
 
         internal void CreatePlatformImpl()

@@ -4,5 +4,8 @@
     {
         bool GetIsSelected();
         ISelectingAutomationPeer GetSelectionContainer();
+        void Select();
+        void AddToSelection();
+        void RemoveFromSelection();
     }
 }

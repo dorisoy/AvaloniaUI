@@ -157,6 +157,7 @@ namespace Avalonia.Controls.Automation.Peers
             };
         }
 
+        protected override bool IsEnabledCore() => Owner.IsEnabled;
         protected override bool IsHiddenCore() => false;
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();

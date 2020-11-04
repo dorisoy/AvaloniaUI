@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Automation;
 using Avalonia.Controls.Automation.Peers;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -20,7 +21,8 @@ namespace Avalonia.Win32.Automation
         IRawElementProviderSimple,
         IRawElementProviderFragment,
         IInvokeProvider,
-        ISelectionProvider
+        ISelectionProvider,
+        ISelectionItemProvider
     {
         private readonly UiaControlTypeId _controlType;
         private readonly WeakReference<AutomationPeer> _peer;
@@ -35,7 +37,9 @@ namespace Avalonia.Win32.Automation
         private string? _name;
         private bool _canSelectMultiple;
         private bool _isSelectionRequired;
+        private bool _isSelected;
         private IRawElementProviderSimple[]? _selection;
+        private AutomationProvider? _selectionContainer;
         private bool _isDisposed;
 
         public AutomationProvider(
@@ -96,6 +100,8 @@ namespace Avalonia.Win32.Automation
         public virtual IRawElementProviderSimple? HostRawElementProvider => null;
         bool ISelectionProvider.CanSelectMultiple => _canSelectMultiple;
         bool ISelectionProvider.IsSelectionRequired => _isSelectionRequired;
+        bool ISelectionItemProvider.IsSelected => _isSelected;
+        IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => _selectionContainer;
 
         public void Dispose() => _isDisposed = true;
         
@@ -118,6 +124,7 @@ namespace Avalonia.Win32.Automation
             {
                 UiaPatternId.Invoke => Peer is IInvocableAutomationPeer ? this : null,
                 UiaPatternId.Selection => Peer is ISelectingAutomationPeer ? this : null,
+                UiaPatternId.SelectionItem => Peer is ISelectableAutomationPeer ? this : null,
                 _ => null,
             };
         }
@@ -172,16 +179,12 @@ namespace Avalonia.Win32.Automation
         }
 
         public override string ToString() => _className!;
-
         IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots() => null;
-
-        void IInvokeProvider.Invoke()
-        {
-            if (Peer is IInvocableAutomationPeer i)
-                InvokeSync(() => i.Invoke());
-        }
-
+        void IInvokeProvider.Invoke() => InvokeAction<IInvocableAutomationPeer>(x => x.Invoke());
         IRawElementProviderSimple[] ISelectionProvider.GetSelection() => _selection ?? Array.Empty<IRawElementProviderSimple>();
+        void ISelectionItemProvider.Select() => InvokeAction<ISelectableAutomationPeer>(x => x.Select());
+        void ISelectionItemProvider.AddToSelection() => InvokeAction<ISelectableAutomationPeer>(x => x.AddToSelection());
+        void ISelectionItemProvider.RemoveFromSelection() => InvokeAction<ISelectableAutomationPeer>(x => x.RemoveFromSelection());
 
         protected void InvokeSync(Action action)
         {
@@ -214,10 +217,23 @@ namespace Avalonia.Win32.Automation
             }
         }
 
+        protected void InvokeAction<TInterface>(Action<TInterface> action)
+        {
+            if (Peer is TInterface i)
+            {
+                try
+                {
+                    InvokeSync(() => action(i));
+                }
+                catch (ElementNotEnabledException e)
+                {
+                    throw new COMException(e.Message, UiaCoreProviderApi.UIA_E_ELEMENTNOTENABLED);
+                }
+            }
+        }
+
         protected virtual void UpdateCore(bool notify)
         {
-            notify &= UiaCoreProviderApi.UiaClientsAreListening();
-
             _className = Peer.GetClassName();
 
             UpdateProperty(UiaPropertyId.BoundingRectangle, ref _boundingRect, Peer.GetBoundingRectangle(), notify);
@@ -243,6 +259,15 @@ namespace Avalonia.Win32.Automation
                     UiaPropertyId.SelectionSelection,
                     ref _selection,
                     selection.Select(x => (IRawElementProviderSimple)x.PlatformImpl!).ToArray(),
+                    notify);
+            }
+
+            if (Peer is ISelectableAutomationPeer selectablePeer)
+            {
+                UpdateProperty(
+                    UiaPropertyId.SelectionItemIsSelected,
+                    ref _isSelected,
+                    selectablePeer.GetIsSelected(),
                     notify);
             }
         }
