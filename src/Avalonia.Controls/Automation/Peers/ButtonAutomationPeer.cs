@@ -6,7 +6,12 @@ namespace Avalonia.Controls.Automation.Peers
         IInvocableAutomationPeer
     {
         public ButtonAutomationPeer(Control owner): base(owner) {}
-        public void Invoke() => (Owner as Button)?.PerformClick();
+        
+        public void Invoke()
+        {
+            EnsureEnabled();
+            (Owner as Button)?.PerformClick();
+        }
     }
 }
 
