@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -33,6 +34,7 @@ namespace Avalonia.Win32.Automation
         private string? _name;
         private SelectionMode _selectionMode;
         private IRawElementProviderSimple[]? _selection;
+        private bool _isDisposed;
 
         public AutomationProvider(
             AutomationPeer peer,
@@ -94,9 +96,14 @@ namespace Avalonia.Win32.Automation
         bool ISelectionProvider.CanSelectMultiple => _selectionMode.HasFlagCustom(SelectionMode.Multiple);
         bool ISelectionProvider.IsSelectionRequired => _selectionMode.HasFlagCustom(SelectionMode.AlwaysSelected);
 
-        public void Dispose() { }
+        public void Dispose() => _isDisposed = true;
         public void PropertyChanged() { }
-        public void StructureChanged() { }
+        
+        public void StructureChanged() 
+        {
+            _childrenValid = false;
+            UiaCoreProviderApi.UiaRaiseStructureChangedEvent(this, StructureChangeType.ChildrenInvalidated, null, 0);
+        }
 
         [return: MarshalAs(UnmanagedType.IUnknown)]
         public virtual object? GetPatternProvider(int patternId)
@@ -164,6 +171,9 @@ namespace Avalonia.Win32.Automation
 
         protected void InvokeSync(Action action)
         {
+            if (_isDisposed)
+                return;
+
             if (Dispatcher.UIThread.CheckAccess())
             {
                 action();
@@ -174,8 +184,12 @@ namespace Avalonia.Win32.Automation
             }
         }
 
+        [return: MaybeNull]
         protected T InvokeSync<T>(Func<T> func)
         {
+            if (_isDisposed)
+                return default;
+
             if (Dispatcher.UIThread.CheckAccess())
             {
                 return func();
@@ -229,6 +243,9 @@ namespace Avalonia.Win32.Automation
             var childPeers = InvokeSync(() => Peer.GetChildren());
 
             _children?.Clear();
+
+            if (childPeers is null)
+                return;
 
             foreach (var childPeer in childPeers)
             {

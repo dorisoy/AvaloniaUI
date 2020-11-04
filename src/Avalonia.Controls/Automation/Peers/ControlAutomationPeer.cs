@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using Avalonia.Controls.Platform;
 using Avalonia.LogicalTree;
 using Avalonia.Platform;
@@ -12,15 +11,18 @@ namespace Avalonia.Controls.Automation.Peers
 {
     public abstract class ControlAutomationPeer : AutomationPeer
     {
+        private readonly EventHandler<VisualTreeAttachmentEventArgs> _invalidateChildren;
         private List<AutomationPeer>? _children;
+        private List<WeakReference<Control>>? _subscribedChildren;
         private bool _childrenValid;
 
         public ControlAutomationPeer(Control owner)
         {
             Owner = owner ?? throw new ArgumentNullException("owner");
+            _invalidateChildren = InvalidateChildren;
 
             var logicalChildren = ((ILogical)owner).LogicalChildren;
-            logicalChildren.CollectionChanged += LogicalChildrenChanged;
+            logicalChildren.CollectionChanged += InvalidateChildren;
         }
 
         public Control Owner { get; }
@@ -47,7 +49,7 @@ namespace Avalonia.Controls.Automation.Peers
             if (!IsDisposed)
             {
                 var logicalChildren = ((ILogical)Owner).LogicalChildren;
-                logicalChildren.CollectionChanged -= LogicalChildrenChanged;
+                logicalChildren.CollectionChanged -= InvalidateChildren;
                 _children = null;
             }
         }
@@ -67,7 +69,19 @@ namespace Avalonia.Controls.Automation.Peers
             return Owner.Bounds.TransformToAABB(t.Value);
         }
 
-        protected override int GetChildCountCore() => ((IVisual)Owner).VisualChildren.Count;
+        protected override int GetChildCountCore()
+        {
+            var logicalChildren = ((ILogical)Owner).LogicalChildren;
+            var result = 0;
+
+            foreach (var child in logicalChildren)
+            {
+                if (child is Control c && ((IVisual)c).IsAttachedToVisualTree)
+                    ++result;
+            }
+
+            return result;
+        }
 
         protected override IReadOnlyList<AutomationPeer>? GetChildrenCore()
         {
@@ -76,30 +90,48 @@ namespace Avalonia.Controls.Automation.Peers
             if (!_childrenValid)
             {
                 if (_children is null && logicalChildren.Count > 0)
-                {
                     _children = new List<AutomationPeer>();
+
+                if (_subscribedChildren is object)
+                {
+                    foreach (var c in _subscribedChildren)
+                    {
+                        if (c.TryGetTarget(out var target))
+                        {
+                            target.AttachedToVisualTree -= _invalidateChildren;
+                            target.DetachedFromVisualTree -= _invalidateChildren;
+                        }
+                    }
+
+                    _subscribedChildren.Clear();
                 }
 
-                for (var i = 0; i < logicalChildren.Count; ++i)
-                {
-                    if (logicalChildren[i] is Control c && ((IVisual)c).IsAttachedToVisualTree)
-                    {
-                        var peer = GetOrCreatePeer(c);
+                var i = -1;
 
-                        if (_children!.Count <= i)
+                foreach (var child in logicalChildren)
+                {
+                    if (child is Control c)
+                    {
+                        if (((IVisual)c).IsAttachedToVisualTree)
                         {
-                            _children.Add(peer);
+                            var peer = GetOrCreatePeer(c);
+
+                            if (_children!.Count <= ++i)
+                                _children.Add(peer);
+                            else
+                                _children[i] = peer;
                         }
-                        else
-                        {
-                            _children[i] = peer;
-                        }
+
+                        _subscribedChildren ??= new List<WeakReference<Control>>();
+                        _subscribedChildren.Add(new WeakReference<Control>(c));
+                        c.AttachedToVisualTree += _invalidateChildren;
+                        c.DetachedFromVisualTree += _invalidateChildren;
                     }
                 }
 
-                if (_children?.Count > logicalChildren.Count)
+                if (_children?.Count > ++i)
                 {
-                    _children.RemoveRange(logicalChildren.Count, _children.Count - logicalChildren.Count);
+                    _children.RemoveRange(i, _children.Count - i);
                 }
 
                 _childrenValid = true;
@@ -125,7 +157,7 @@ namespace Avalonia.Controls.Automation.Peers
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
 
-        private void LogicalChildrenChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void InvalidateChildren()
         {
             if (!IsDisposed)
             {
@@ -133,6 +165,8 @@ namespace Avalonia.Controls.Automation.Peers
                 PlatformImpl!.StructureChanged();
             }
         }
+
+        private void InvalidateChildren(object sender, EventArgs e) => InvalidateChildren();
     }
 }
 
