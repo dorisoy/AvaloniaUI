@@ -143,6 +143,7 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override string GetClassNameCore() => Owner.GetType().Name;
         protected override string? GetNameCore() => AutomationProperties.GetName(Owner);
+        protected override bool HasKeyboardFocusCore() => Owner.IsFocused;
 
         protected override AutomationPeer? GetParentCore()
         {

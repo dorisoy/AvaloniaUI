@@ -34,6 +34,7 @@ namespace Avalonia.Win32.Automation
         private List<AutomationProvider>? _children;
         private bool _childrenValid;
         private string? _className;
+        private bool _hasKeyboardFocus;
         private bool _isKeyboardFocusable;
         private string? _name;
         private ExpandCollapseState _expandCollapseState;
@@ -106,16 +107,29 @@ namespace Avalonia.Win32.Automation
         IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => _selectionContainer;
         ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState => _expandCollapseState;
 
-        public void Dispose() => _isDisposed = true;
+        public void Dispose()
+        {
+            if (_isDisposed)
+                return;
+
+            UiaCoreProviderApi.UiaDisconnectProvider(this);
+            _isDisposed = true;
+        }
         
         public void PropertyChanged() 
         {
+            if (_isDisposed)
+                return;
+
             Dispatcher.UIThread.VerifyAccess();
             UpdateCore(true);
         }
         
         public void StructureChanged() 
         {
+            if (_isDisposed)
+                return;
+
             _childrenValid = false;
             UiaCoreProviderApi.UiaRaiseStructureChangedEvent(this, StructureChangeType.ChildrenInvalidated, null, 0);
         }
@@ -123,6 +137,9 @@ namespace Avalonia.Win32.Automation
         [return: MarshalAs(UnmanagedType.IUnknown)]
         public virtual object? GetPatternProvider(int patternId)
         {
+            if (_isDisposed)
+                return null;
+
             return (UiaPatternId)patternId switch
             {
                 UiaPatternId.ExpandCollapse => Peer is IOpenCloseAutomationPeer ? this : null,
@@ -135,6 +152,9 @@ namespace Avalonia.Win32.Automation
 
         public virtual object? GetPropertyValue(int propertyId)
         {
+            if (_isDisposed)
+                return null;
+
             return (UiaPropertyId)propertyId switch
             {
                 UiaPropertyId.ClassName => _className,
@@ -152,6 +172,9 @@ namespace Avalonia.Win32.Automation
 
         public virtual IRawElementProviderFragment? Navigate(NavigateDirection direction)
         {
+            if (_isDisposed)
+                return null;
+
             if (direction == NavigateDirection.Parent)
             {
                 return GetParent();
@@ -171,6 +194,9 @@ namespace Avalonia.Win32.Automation
 
         public void SetFocus()
         {
+            if (_isDisposed)
+                return;
+
             InvokeSync(() => Peer.SetFocus());
         }
 
@@ -243,6 +269,7 @@ namespace Avalonia.Win32.Automation
             _className = Peer.GetClassName();
 
             UpdateProperty(UiaPropertyId.BoundingRectangle, ref _boundingRect, Peer.GetBoundingRectangle(), notify);
+            UpdateProperty(UiaPropertyId.HasKeyboardFocus, ref _hasKeyboardFocus, Peer.HasKeyboardFocus(), notify);
             UpdateProperty(UiaPropertyId.IsKeyboardFocusable, ref _isKeyboardFocusable, Peer.IsKeyboardFocusable(), notify);
             UpdateProperty(UiaPropertyId.Name, ref _name, Peer.GetName(), notify);
 
