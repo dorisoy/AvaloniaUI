@@ -28,6 +28,7 @@ namespace Avalonia.Win32.Automation
             {
                 AnonymousAutomationPeer _ => UiaControlTypeId.Group,
                 ButtonAutomationPeer _ => UiaControlTypeId.Button,
+                ComboBoxAutomationPeer _ => UiaControlTypeId.ComboBox,
                 MenuAutomationPeer _ => UiaControlTypeId.Menu,
                 MenuItemAutomationPeer _ => UiaControlTypeId.MenuItem,
                 SliderAutomationPeer _ => UiaControlTypeId.Slider,

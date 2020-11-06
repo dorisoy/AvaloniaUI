@@ -20,6 +20,7 @@ namespace Avalonia.Win32.Automation
         IAutomationPeerImpl,
         IRawElementProviderSimple,
         IRawElementProviderFragment,
+        IExpandCollapseProvider,
         IInvokeProvider,
         ISelectionProvider,
         ISelectionItemProvider
@@ -35,6 +36,7 @@ namespace Avalonia.Win32.Automation
         private string? _className;
         private bool _isKeyboardFocusable;
         private string? _name;
+        private ExpandCollapseState _expandCollapseState;
         private bool _canSelectMultiple;
         private bool _isSelectionRequired;
         private bool _isSelected;
@@ -102,6 +104,7 @@ namespace Avalonia.Win32.Automation
         bool ISelectionProvider.IsSelectionRequired => _isSelectionRequired;
         bool ISelectionItemProvider.IsSelected => _isSelected;
         IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => _selectionContainer;
+        ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState => _expandCollapseState;
 
         public void Dispose() => _isDisposed = true;
         
@@ -122,6 +125,7 @@ namespace Avalonia.Win32.Automation
         {
             return (UiaPatternId)patternId switch
             {
+                UiaPatternId.ExpandCollapse => Peer is IOpenCloseAutomationPeer ? this : null,
                 UiaPatternId.Invoke => Peer is IInvocableAutomationPeer ? this : null,
                 UiaPatternId.Selection => Peer is ISelectingAutomationPeer ? this : null,
                 UiaPatternId.SelectionItem => Peer is ISelectableAutomationPeer ? this : null,
@@ -180,6 +184,8 @@ namespace Avalonia.Win32.Automation
 
         public override string ToString() => _className!;
         IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots() => null;
+        void IExpandCollapseProvider.Expand() => InvokeAction<IOpenCloseAutomationPeer>(x => x.Open());
+        void IExpandCollapseProvider.Collapse() => InvokeAction<IOpenCloseAutomationPeer>(x => x.Close());
         void IInvokeProvider.Invoke() => InvokeAction<IInvocableAutomationPeer>(x => x.Invoke());
         IRawElementProviderSimple[] ISelectionProvider.GetSelection() => _selection ?? Array.Empty<IRawElementProviderSimple>();
         void ISelectionItemProvider.Select() => InvokeAction<ISelectableAutomationPeer>(x => x.Select());
@@ -268,6 +274,15 @@ namespace Avalonia.Win32.Automation
                     UiaPropertyId.SelectionItemIsSelected,
                     ref _isSelected,
                     selectablePeer.GetIsSelected(),
+                    notify);
+            }
+
+            if (Peer is IOpenCloseAutomationPeer openClosePeer)
+            {
+                UpdateProperty(
+                    UiaPropertyId.ExpandCollapseExpandCollapseState,
+                    ref _expandCollapseState,
+                    openClosePeer.GetIsOpen() ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed,
                     notify);
             }
         }

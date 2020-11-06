@@ -459,8 +459,12 @@ namespace Avalonia.Win32
                     if ((long)lParam == UiaRootObjectId)
                     {
                         var provider = GetOrCreateAutomationProvider();
-                        var r = UiaCoreProviderApi.UiaReturnRawElementProvider(_hwnd, wParam, lParam, provider);
-                        return r;
+
+                        if (provider is object)
+                        {
+                            var r = UiaCoreProviderApi.UiaReturnRawElementProvider(_hwnd, wParam, lParam, provider);
+                            return r;
+                        }
                     }
                     break;
             }

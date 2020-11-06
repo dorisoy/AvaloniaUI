@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Avalonia.Controls.Platform;
+using Avalonia.Controls.Primitives;
 using Avalonia.LogicalTree;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
@@ -37,11 +38,7 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override IAutomationPeerImpl CreatePlatformImplCore()
         {
-            var root = Owner.GetVisualRoot() as TopLevel ??
-                throw new InvalidOperationException("Cannot create automation peer for non-rooted control.");
-            var factory = root.PlatformImpl as IPlatformAutomationInterface ??
-                throw new InvalidOperationException("UI Automation is not enabled for this platform.");
-            return factory.CreateAutomationPeerImpl(this);
+            return GetPlatformImplFactory().CreateAutomationPeerImpl(this);
         }
 
         protected override void Dispose(bool disposing)
@@ -161,6 +158,20 @@ namespace Avalonia.Controls.Automation.Peers
         protected override bool IsHiddenCore() => false;
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
+
+        private IPlatformAutomationInterface GetPlatformImplFactory()
+        {
+            var root = Owner.GetVisualRoot() as TopLevel;
+
+            while (root is object)
+            {
+                if (root?.PlatformImpl is IPlatformAutomationInterface i)
+                    return i;
+                root = (root as IHostedVisualTreeRoot)?.Host?.GetVisualRoot() as TopLevel;
+            }
+
+            throw new InvalidOperationException("Cannot create automation peer for non-rooted control.");
+        }
 
         private void InvalidateProperties()
         {

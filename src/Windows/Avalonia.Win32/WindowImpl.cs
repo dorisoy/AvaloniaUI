@@ -1260,7 +1260,7 @@ namespace Avalonia.Win32
             if (_automationProvider is null)
             {
                 var peer = ControlAutomationPeer.GetOrCreatePeer((Control)_owner);
-                _automationProvider = (WindowProvider)peer.PlatformImpl;
+                _automationProvider = peer.PlatformImpl as WindowProvider;
             }
 
             return _automationProvider;

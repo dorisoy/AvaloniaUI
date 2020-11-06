@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Avalonia.Controls.Primitives;
+using Avalonia.VisualTree;
 
 #nullable enable
 
@@ -26,7 +27,7 @@ namespace Avalonia.Controls.Automation.Peers
                 {
                     var container = owner.ItemContainerGenerator.ContainerFromIndex(i);
 
-                    if (container is Control c)
+                    if (container is Control c && ((IVisual)c).IsAttachedToVisualTree)
                     {
                         var peer = GetOrCreatePeer(c);
 

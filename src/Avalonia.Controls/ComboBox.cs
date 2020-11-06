@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Avalonia.Controls.Automation.Peers;
 using Avalonia.Controls.Generators;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
@@ -290,6 +291,8 @@ namespace Avalonia.Controls
             _popup = e.NameScope.Get<Popup>("PART_Popup");
             _popup.Opened += PopupOpened;
         }
+
+        protected override AutomationPeer OnCreateAutomationPeer() => new ComboBoxAutomationPeer(this);
 
         internal void ItemFocused(ComboBoxItem dropDownItem)
         {
