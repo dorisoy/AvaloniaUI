@@ -66,8 +66,20 @@ namespace Avalonia.Win32.Automation
             if (newFocusPeer != oldFocusPeer)
             {
                 _focusValid = false;
-                _focusPeer = newFocusPeer is object ? new WeakReference<AutomationPeer>(newFocusPeer) : null;
-                UiaCoreProviderApi.UiaRaiseAutomationEvent(this, (int)UiaEventId.AutomationFocusChanged);
+
+                if (newFocusPeer is object)
+                {
+                    _focusPeer = new WeakReference<AutomationPeer>(newFocusPeer);
+
+                    var provider = (AutomationProvider)newFocusPeer.PlatformImpl!;
+                    UiaCoreProviderApi.UiaRaiseAutomationEvent(provider, (int)UiaEventId.AutomationFocusChanged);
+                    System.Diagnostics.Debug.WriteLine($"Focus changed from {oldFocusPeer} to {newFocusPeer}");
+                }
+                else
+                {
+                    _focusPeer = null;
+                    System.Diagnostics.Debug.WriteLine($"Focus changed from {oldFocusPeer} to null");
+                }
             }
         }
     }

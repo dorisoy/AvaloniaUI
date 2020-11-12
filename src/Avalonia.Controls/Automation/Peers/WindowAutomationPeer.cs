@@ -18,6 +18,16 @@ namespace Avalonia.Controls.Automation.Peers
 
         public AutomationPeer? GetFocus() => GetFocusCore();
 
+        protected virtual void FocusChangedCore(IInputElement? focusedElement)
+        {
+            // HACK: Don't send focus changed messages when application deactivates. We shouldn't
+            // be clearing the focus in this case.
+            if (Owner.GetValue(Window.IsActiveProperty))
+            {
+                PlatformImpl?.PropertyChanged();
+            }
+        }
+
         protected AutomationPeer? GetFocusCore()
         {
             var focused = KeyboardDevice.Instance.FocusedElement as Control;
@@ -45,7 +55,10 @@ namespace Avalonia.Controls.Automation.Peers
 
         private void KeyboardDevicePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            PlatformImpl?.PropertyChanged();
+            if (e.PropertyName == nameof(KeyboardDevice.FocusedElement))
+            {
+                FocusChangedCore(KeyboardDevice.Instance.FocusedElement);
+            }
         }
     }
 }

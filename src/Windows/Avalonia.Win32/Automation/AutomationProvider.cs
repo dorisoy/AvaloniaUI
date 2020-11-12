@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -27,6 +29,7 @@ namespace Avalonia.Win32.Automation
     {
         private readonly UiaControlTypeId _controlType;
         private readonly WeakReference<AutomationPeer> _peer;
+        private readonly IRawElementProviderFragmentRoot _root;
         private readonly bool _isHidden;
         private AutomationProvider? _parent;
         private IRawElementProviderFragmentRoot? _fragmentRoot;
@@ -36,6 +39,7 @@ namespace Avalonia.Win32.Automation
         private string? _className;
         private bool _hasKeyboardFocus;
         private bool _isKeyboardFocusable;
+        private bool _isEnabled;
         private string? _name;
         private ExpandCollapseState _expandCollapseState;
         private bool _canSelectMultiple;
@@ -47,12 +51,14 @@ namespace Avalonia.Win32.Automation
 
         public AutomationProvider(
             AutomationPeer peer,
-            UiaControlTypeId controlType)
+            UiaControlTypeId controlType,
+            IRawElementProviderFragmentRoot root)
         {
             Dispatcher.UIThread.VerifyAccess();
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = controlType;
+            _root = root;
             _isHidden = peer.IsHidden();
         }
 
@@ -62,6 +68,7 @@ namespace Avalonia.Win32.Automation
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = UiaControlTypeId.Window;
+            _root = (IRawElementProviderFragmentRoot)this;
         }
 
         public AutomationPeer Peer
@@ -89,14 +96,7 @@ namespace Avalonia.Win32.Automation
             }
         }
 
-        public virtual IRawElementProviderFragmentRoot FragmentRoot
-        {
-            get
-            {
-                return _fragmentRoot ??= GetParent()?.FragmentRoot ??
-                    throw new AvaloniaInternalException("Could not get FragmentRoot from parent.");
-            }
-        }
+        public virtual IRawElementProviderFragmentRoot FragmentRoot => _root;
         
         public ProviderOptions ProviderOptions => ProviderOptions.ServerSideProvider;
         public WindowImpl? Window => (FragmentRoot as WindowProvider)?.Owner;
@@ -112,8 +112,8 @@ namespace Avalonia.Win32.Automation
             if (_isDisposed)
                 return;
 
-            UiaCoreProviderApi.UiaDisconnectProvider(this);
             _isDisposed = true;
+            UiaCoreProviderApi.UiaDisconnectProvider(this);
         }
         
         public void PropertyChanged() 
@@ -155,17 +155,28 @@ namespace Avalonia.Win32.Automation
             if (_isDisposed)
                 return null;
 
-            return (UiaPropertyId)propertyId switch
+            object? result = (UiaPropertyId)propertyId switch
             {
                 UiaPropertyId.ClassName => _className,
+                UiaPropertyId.ClickablePoint => new[] { BoundingRectangle.Center.X, BoundingRectangle.Center.Y },
                 UiaPropertyId.ControlType => _controlType,
+                UiaPropertyId.Culture => CultureInfo.CurrentCulture.LCID,
+                UiaPropertyId.HasKeyboardFocus => _hasKeyboardFocus,
                 UiaPropertyId.IsContentElement => !_isHidden,
                 UiaPropertyId.IsControlElement => !_isHidden,
+                UiaPropertyId.IsEnabled => _isEnabled,
                 UiaPropertyId.IsKeyboardFocusable => _isKeyboardFocusable,
                 UiaPropertyId.LocalizedControlType => _controlType.ToString().ToLowerInvariant(),
                 UiaPropertyId.Name => _name,
+                UiaPropertyId.ProcessId => Process.GetCurrentProcess().Id,
+                UiaPropertyId.RuntimeId => GetRuntimeId(),
                 _ => null,
             };
+
+            if (result is null)
+                System.Diagnostics.Debug.WriteLine("No result for property " + (UiaPropertyId)propertyId);
+
+            return result;
         }
 
         public int[]? GetRuntimeId() => new int[] { 3, Peer.GetHashCode() };
@@ -271,6 +282,7 @@ namespace Avalonia.Win32.Automation
             UpdateProperty(UiaPropertyId.BoundingRectangle, ref _boundingRect, Peer.GetBoundingRectangle(), notify);
             UpdateProperty(UiaPropertyId.HasKeyboardFocus, ref _hasKeyboardFocus, Peer.HasKeyboardFocus(), notify);
             UpdateProperty(UiaPropertyId.IsKeyboardFocusable, ref _isKeyboardFocusable, Peer.IsKeyboardFocusable(), notify);
+            UpdateProperty(UiaPropertyId.IsEnabled, ref _isEnabled, Peer.IsEnabled(), notify);
             UpdateProperty(UiaPropertyId.Name, ref _name, Peer.GetName(), notify);
 
             if (Peer is ISelectingAutomationPeer selectionPeer)

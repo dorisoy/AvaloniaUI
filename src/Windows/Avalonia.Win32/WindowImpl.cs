@@ -677,7 +677,7 @@ namespace Avalonia.Win32
 
         public IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer)
         {
-            return AutomationProviderFactory.Create(peer);
+            return AutomationProviderFactory.Create(peer, _automationProvider);
         }
 
         protected virtual IntPtr CreateWindowOverride(ushort atom)
