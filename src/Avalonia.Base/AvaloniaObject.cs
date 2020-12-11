@@ -247,8 +247,8 @@ namespace Avalonia
             property = property ?? throw new ArgumentNullException(nameof(property));
             VerifyAccess();
 
-            var registered = AvaloniaPropertyRegistry.Instance.GetRegisteredDirect(this, property);
-            return registered.InvokeGetter(this);
+            var registered = AvaloniaPropertyRegistry.Instance.FindRegisteredDirect(this, property);
+            return registered is object ? registered.InvokeGetter(this) : default;
         }
 
         /// <inheritdoc/>
