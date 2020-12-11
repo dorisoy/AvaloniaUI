@@ -82,6 +82,9 @@ namespace Avalonia.Controls
             }          
         }
 
-        protected override AutomationPeer OnCreateAutomationPeer() => new TabItemAutomationPeer(this);
+        protected override AutomationPeer OnCreateAutomationPeer()
+        {
+            return new ListItemAutomationPeer(this, AutomationRole.TabItem);
+        }
     }
 }

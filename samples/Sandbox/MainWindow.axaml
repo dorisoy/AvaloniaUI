@@ -1,4 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
         x:Class="Sandbox.MainWindow">
+    <StackPanel>
+        <Button>Hello</Button>
+        <Button>World</Button>
+        <ComboBox>
+            <ComboBoxItem>Hello</ComboBoxItem>
+            <ComboBoxItem>World</ComboBoxItem>
+        </ComboBox>
+    </StackPanel>
 </Window>

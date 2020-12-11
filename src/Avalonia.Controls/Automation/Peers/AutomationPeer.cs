@@ -24,6 +24,11 @@ namespace Avalonia.Controls.Automation.Peers
         public bool IsDisposed => PlatformImpl is null;
 
         /// <summary>
+        /// Attempts to bring the element associated with the automation peer into view.
+        /// </summary>
+        public void BringIntoView() => BringIntoViewCore();
+
+        /// <summary>
         /// Releases all resources used by the automation peer.
         /// </summary>
         public void Dispose()
@@ -71,6 +76,11 @@ namespace Avalonia.Controls.Automation.Peers
         public AutomationPeer? GetPeerFromPoint(Point point) => GetPeerFromPointCore(point);
 
         /// <summary>
+        /// Gets the role of the element that is associated with this automation peer.
+        /// </summary>
+        public AutomationRole GetRole() => GetRoleCore();
+
+        /// <summary>
         /// Gets a value that indicates whether the element that is associated with this automation
         /// peer currently has keyboard focus.
         /// </summary>
@@ -80,11 +90,6 @@ namespace Avalonia.Controls.Automation.Peers
         /// Gets a value indicating whether the control is enabled for user interaction.
         /// </summary>
         public bool IsEnabled() => IsEnabledCore();
-
-        /// <summary>
-        /// Gets a value indicating whether the control is hidden from the default UI automation tree.
-        /// </summary>
-        public bool IsHidden() => IsHiddenCore();
 
         /// <summary>
         /// Gets a value that indicates whether the element can accept keyboard focus.
@@ -97,6 +102,7 @@ namespace Avalonia.Controls.Automation.Peers
         /// </summary>
         public void SetFocus() => SetFocusCore();
 
+        protected abstract void BringIntoViewCore();
         protected abstract IAutomationPeerImpl CreatePlatformImplCore();
         protected abstract Rect GetBoundingRectangleCore();
         protected abstract int GetChildCountCore();
@@ -104,9 +110,9 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract string GetClassNameCore();
         protected abstract string? GetNameCore();
         protected abstract AutomationPeer? GetParentCore();
+        protected abstract AutomationRole GetRoleCore();
         protected abstract bool HasKeyboardFocusCore();
         protected abstract bool IsEnabledCore();
-        protected abstract bool IsHiddenCore();
         protected abstract bool IsKeyboardFocusableCore();
         protected abstract void SetFocusCore();
 

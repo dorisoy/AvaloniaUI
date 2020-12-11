@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
-
-#nullable enable
+﻿#nullable enable
 
 namespace Avalonia.Controls.Automation.Peers
 {
     public class MenuItemAutomationPeer : ControlAutomationPeer
     {
-        public MenuItemAutomationPeer(Control owner) : base(owner) { }
+        public MenuItemAutomationPeer(Control owner)
+            : base(owner, AutomationRole.MenuItem) 
+        { 
+        }
 
         protected override string? GetNameCore()
         {

@@ -10,15 +10,20 @@ using Avalonia.VisualTree;
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public abstract class ControlAutomationPeer : AutomationPeer
+    /// <summary>
+    /// An automation peer which represents a <see cref="Control"/> element.
+    /// </summary>
+    public class ControlAutomationPeer : AutomationPeer
     {
+        private readonly AutomationRole _role;
         private readonly EventHandler<VisualTreeAttachmentEventArgs> _invalidateChildren;
         private List<AutomationPeer>? _children;
         private List<WeakReference<Control>>? _subscribedChildren;
         private bool _childrenValid;
 
-        public ControlAutomationPeer(Control owner)
+        public ControlAutomationPeer(Control owner, AutomationRole role)
         {
+            _role = role;
             _invalidateChildren = InvalidateStructure;
 
             Owner = owner ?? throw new ArgumentNullException("owner");
@@ -35,6 +40,8 @@ namespace Avalonia.Controls.Automation.Peers
             element = element ?? throw new ArgumentNullException("element");
             return element.GetOrCreateAutomationPeer();
         }
+
+        protected override void BringIntoViewCore() => Owner.BringIntoView();
 
         protected override IAutomationPeerImpl CreatePlatformImplCore()
         {
@@ -143,7 +150,6 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override string GetClassNameCore() => Owner.GetType().Name;
         protected override string? GetNameCore() => AutomationProperties.GetName(Owner);
-        protected override bool HasKeyboardFocusCore() => Owner.IsFocused;
 
         protected override AutomationPeer? GetParentCore()
         {
@@ -155,8 +161,9 @@ namespace Avalonia.Controls.Automation.Peers
             };
         }
 
+        protected override AutomationRole GetRoleCore() => _role;
+        protected override bool HasKeyboardFocusCore() => Owner.IsFocused;
         protected override bool IsEnabledCore() => Owner.IsEnabled;
-        protected override bool IsHiddenCore() => false;
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
 

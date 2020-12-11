@@ -7,10 +7,15 @@ using Avalonia.VisualTree;
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public abstract class SelectingItemsControlAutomationPeer : ControlAutomationPeer,
+    public abstract class SelectingItemsControlAutomationPeer : ListAutomationPeer,
         ISelectingAutomationPeer
     {
-        protected SelectingItemsControlAutomationPeer(Control owner) : base(owner) { }
+        protected SelectingItemsControlAutomationPeer(
+            Control owner,
+            AutomationRole role = AutomationRole.List)
+            : base(owner, role) 
+        { 
+        }
 
         public SelectionMode GetSelectionMode() => GetSelectionModeCore();
         public IReadOnlyList<AutomationPeer> GetSelection() => GetSelectionCore() ?? Array.Empty<AutomationPeer>();

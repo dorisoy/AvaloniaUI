@@ -1,12 +1,14 @@
 ﻿#nullable enable
 
-using System.Collections.Generic;
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public abstract class ContentControlAutomationPeerBase : ControlAutomationPeer
+    public class ContentControlAutomationPeer : ControlAutomationPeer
     {
-        protected ContentControlAutomationPeerBase(Control owner) : base(owner) { }
+        protected ContentControlAutomationPeer(Control owner, AutomationRole role)
+            : base(owner, role) 
+        { 
+        }
 
         protected override string? GetNameCore()
         {

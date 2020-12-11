@@ -11,6 +11,7 @@ using Avalonia.Controls.Automation;
 using Avalonia.Controls.Automation.Peers;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Avalonia.Utilities;
 using Avalonia.Win32.Interop.Automation;
 
 #nullable enable
@@ -24,15 +25,17 @@ namespace Avalonia.Win32.Automation
         IRawElementProviderFragment,
         IExpandCollapseProvider,
         IInvokeProvider,
+        IScrollProvider,
+        IScrollItemProvider,
         ISelectionProvider,
         ISelectionItemProvider
     {
         private readonly UiaControlTypeId _controlType;
+        private readonly bool _isControlElement;
         private readonly WeakReference<AutomationPeer> _peer;
-        private readonly IRawElementProviderFragmentRoot _root;
-        private readonly bool _isHidden;
+        private readonly WindowImpl _visualRoot;
+        private readonly IRawElementProviderFragmentRoot _fragmentRoot;
         private AutomationProvider? _parent;
-        private IRawElementProviderFragmentRoot? _fragmentRoot;
         private Rect _boundingRect;
         private List<AutomationProvider>? _children;
         private bool _childrenValid;
@@ -46,29 +49,32 @@ namespace Avalonia.Win32.Automation
         private bool _isSelectionRequired;
         private bool _isSelected;
         private IRawElementProviderSimple[]? _selection;
-        private AutomationProvider? _selectionContainer;
         private bool _isDisposed;
 
         public AutomationProvider(
             AutomationPeer peer,
             UiaControlTypeId controlType,
-            IRawElementProviderFragmentRoot root)
+            bool isControlElement,
+            WindowImpl visualRoot,
+            IRawElementProviderFragmentRoot fragmentRoot)
         {
             Dispatcher.UIThread.VerifyAccess();
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = controlType;
-            _root = root;
-            _isHidden = peer.IsHidden();
+            _isControlElement = isControlElement;
+            _visualRoot = visualRoot ?? throw new ArgumentNullException(nameof(visualRoot));
+            _fragmentRoot = fragmentRoot ?? throw new ArgumentNullException(nameof(fragmentRoot));
         }
 
-        protected AutomationProvider(AutomationPeer peer)
+        protected AutomationProvider(AutomationPeer peer, WindowImpl visualRoot)
         {
             Dispatcher.UIThread.VerifyAccess();
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = UiaControlTypeId.Window;
-            _root = (IRawElementProviderFragmentRoot)this;
+            _visualRoot = visualRoot;
+            _fragmentRoot = (IRawElementProviderFragmentRoot)this;
         }
 
         public AutomationPeer Peer
@@ -84,28 +90,69 @@ namespace Avalonia.Win32.Automation
         { 
             get
             {
-                if (Window is null)
-                {
-                    throw new NotSupportedException("Non-Window roots not yet supported.");
-                }
-
                 return new PixelRect(
-                    Window.PointToScreen(_boundingRect.TopLeft),
-                    Window.PointToScreen(_boundingRect.BottomRight))
+                    _visualRoot.PointToScreen(_boundingRect.TopLeft),
+                    _visualRoot.PointToScreen(_boundingRect.BottomRight))
                     .ToRect(1);
             }
         }
 
-        public virtual IRawElementProviderFragmentRoot FragmentRoot => _root;
+        public virtual IRawElementProviderFragmentRoot FragmentRoot => _fragmentRoot;
         
         public ProviderOptions ProviderOptions => ProviderOptions.ServerSideProvider;
-        public WindowImpl? Window => (FragmentRoot as WindowProvider)?.Owner;
         public virtual IRawElementProviderSimple? HostRawElementProvider => null;
         bool ISelectionProvider.CanSelectMultiple => _canSelectMultiple;
         bool ISelectionProvider.IsSelectionRequired => _isSelectionRequired;
         bool ISelectionItemProvider.IsSelected => _isSelected;
-        IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => _selectionContainer;
+        IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => null;
         ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState => _expandCollapseState;
+
+        double IScrollProvider.HorizontalScrollPercent
+        {
+            get => InvokeSync<IScrollableAutomationPeer, double>(
+                x => x.Offset.X * 100 / (x.Extent.Width - x.Viewport.Width));
+        }
+
+        double IScrollProvider.VerticalScrollPercent
+        {
+            get => InvokeSync<IScrollableAutomationPeer, double>(
+                x => x.Offset.Y * 100 / (x.Extent.Height - x.Viewport.Height));
+        }
+
+        double IScrollProvider.HorizontalViewSize
+        {
+            get
+            {
+                return InvokeSync<IScrollableAutomationPeer, double>(x =>
+                {
+                    if (MathUtilities.IsZero(x.Extent.Width))
+                        return 100;
+                    return Math.Min(100, x.Viewport.Width / x.Extent.Width);
+                });
+            }
+        }
+
+        double IScrollProvider.VerticalViewSize
+        {
+            get
+            {
+                return InvokeSync<IScrollableAutomationPeer, double>(x =>
+                {
+                    if (MathUtilities.IsZero(x.Extent.Height))
+                        return 100;
+                    return Math.Min(100, x.Viewport.Height / x.Extent.Height);
+                });
+            }
+        }
+        bool IScrollProvider.HorizontallyScrollable
+        {
+            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.Extent.Width > x.Viewport.Width);
+        }
+
+        bool IScrollProvider.VerticallyScrollable
+        {
+            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.Extent.Height > x.Viewport.Height);
+        }
 
         public void Dispose()
         {
@@ -144,6 +191,8 @@ namespace Avalonia.Win32.Automation
             {
                 UiaPatternId.ExpandCollapse => Peer is IOpenCloseAutomationPeer ? this : null,
                 UiaPatternId.Invoke => Peer is IInvocableAutomationPeer ? this : null,
+                UiaPatternId.Scroll => Peer is IScrollableAutomationPeer ? this : null,
+                UiaPatternId.ScrollItem => this,
                 UiaPatternId.Selection => Peer is ISelectingAutomationPeer ? this : null,
                 UiaPatternId.SelectionItem => Peer is ISelectableAutomationPeer ? this : null,
                 _ => null,
@@ -162,8 +211,8 @@ namespace Avalonia.Win32.Automation
                 UiaPropertyId.ControlType => _controlType,
                 UiaPropertyId.Culture => CultureInfo.CurrentCulture.LCID,
                 UiaPropertyId.HasKeyboardFocus => _hasKeyboardFocus,
-                UiaPropertyId.IsContentElement => !_isHidden,
-                UiaPropertyId.IsControlElement => !_isHidden,
+                UiaPropertyId.IsContentElement => _isControlElement,
+                UiaPropertyId.IsControlElement => _isControlElement,
                 UiaPropertyId.IsEnabled => _isEnabled,
                 UiaPropertyId.IsKeyboardFocusable => _isKeyboardFocusable,
                 UiaPropertyId.LocalizedControlType => _controlType.ToString().ToLowerInvariant(),
@@ -172,9 +221,6 @@ namespace Avalonia.Win32.Automation
                 UiaPropertyId.RuntimeId => GetRuntimeId(),
                 _ => null,
             };
-
-            if (result is null)
-                System.Diagnostics.Debug.WriteLine("No result for property " + (UiaPropertyId)propertyId);
 
             return result;
         }
@@ -221,13 +267,68 @@ namespace Avalonia.Win32.Automation
 
         public override string ToString() => _className!;
         IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots() => null;
-        void IExpandCollapseProvider.Expand() => InvokeAction<IOpenCloseAutomationPeer>(x => x.Open());
-        void IExpandCollapseProvider.Collapse() => InvokeAction<IOpenCloseAutomationPeer>(x => x.Close());
-        void IInvokeProvider.Invoke() => InvokeAction<IInvocableAutomationPeer>(x => x.Invoke());
+        void IExpandCollapseProvider.Expand() => InvokeSync<IOpenCloseAutomationPeer>(x => x.Open());
+        void IExpandCollapseProvider.Collapse() => InvokeSync<IOpenCloseAutomationPeer>(x => x.Close());
+        void IInvokeProvider.Invoke() => InvokeSync<IInvocableAutomationPeer>(x => x.Invoke());
         IRawElementProviderSimple[] ISelectionProvider.GetSelection() => _selection ?? Array.Empty<IRawElementProviderSimple>();
-        void ISelectionItemProvider.Select() => InvokeAction<ISelectableAutomationPeer>(x => x.Select());
-        void ISelectionItemProvider.AddToSelection() => InvokeAction<ISelectableAutomationPeer>(x => x.AddToSelection());
-        void ISelectionItemProvider.RemoveFromSelection() => InvokeAction<ISelectableAutomationPeer>(x => x.RemoveFromSelection());
+        void ISelectionItemProvider.Select() => InvokeSync<ISelectableAutomationPeer>(x => x.Select());
+        void ISelectionItemProvider.AddToSelection() => InvokeSync<ISelectableAutomationPeer>(x => x.AddToSelection());
+        void ISelectionItemProvider.RemoveFromSelection() => InvokeSync<ISelectableAutomationPeer>(x => x.RemoveFromSelection());
+
+
+        void IScrollProvider.Scroll(ScrollAmount horizontalAmount, ScrollAmount verticalAmount)
+        {
+            switch (verticalAmount)
+            {
+                case ScrollAmount.LargeDecrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.PageUp());
+                    break;
+                case ScrollAmount.SmallDecrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.LineUp());
+                    break;
+                case ScrollAmount.SmallIncrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.LineDown());
+                    break;
+                case ScrollAmount.LargeIncrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.PageDown());
+                    break;
+            }
+
+            switch (horizontalAmount)
+            {
+                case ScrollAmount.LargeDecrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.PageLeft());
+                    break;
+                case ScrollAmount.SmallDecrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.LineLeft());
+                    break;
+                case ScrollAmount.SmallIncrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.LineRight());
+                    break;
+                case ScrollAmount.LargeIncrement:
+                    InvokeSync<IScrollableAutomationPeer>(x => x.PageRight());
+                    break;
+            }
+        }
+
+        void IScrollProvider.SetScrollPercent(double horizontalPercent, double verticalPercent)
+        {
+            InvokeSync<IScrollableAutomationPeer>(x =>
+            {
+                var sx = horizontalPercent >= 0 && horizontalPercent <= 100 ?
+                    (x.Extent.Width - x.Viewport.Width) * horizontalPercent :
+                    x.Offset.X;
+                var sy = verticalPercent >= 0 && verticalPercent <= 100 ?
+                    (x.Extent.Height - x.Viewport.Height) * verticalPercent :
+                    x.Offset.Y;
+                x.Offset = new Vector(sx, sy);
+            });
+        }
+
+        void IScrollItemProvider.ScrollIntoView()
+        {
+            InvokeSync(() => Peer.BringIntoView());
+        }
 
         protected void InvokeSync(Action action)
         {
@@ -260,7 +361,7 @@ namespace Avalonia.Win32.Automation
             }
         }
 
-        protected void InvokeAction<TInterface>(Action<TInterface> action)
+        protected void InvokeSync<TInterface>(Action<TInterface> action)
         {
             if (Peer is TInterface i)
             {
@@ -273,6 +374,24 @@ namespace Avalonia.Win32.Automation
                     throw new COMException(e.Message, UiaCoreProviderApi.UIA_E_ELEMENTNOTENABLED);
                 }
             }
+        }
+
+        [return: MaybeNull]
+        protected TResult InvokeSync<TInterface, TResult>(Func<TInterface, TResult> func)
+        {
+            if (Peer is TInterface i)
+            {
+                try
+                {
+                    return InvokeSync(() => func(i));
+                }
+                catch (AggregateException e) when (e.InnerException is ElementNotEnabledException)
+                {
+                    throw new COMException(e.Message, UiaCoreProviderApi.UIA_E_ELEMENTNOTENABLED);
+                }
+            }
+
+            return default;
         }
 
         protected virtual void UpdateCore(bool notify)

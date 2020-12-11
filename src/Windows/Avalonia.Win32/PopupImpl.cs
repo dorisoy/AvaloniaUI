@@ -1,6 +1,8 @@
 using System;
+using Avalonia.Controls.Automation.Peers;
 using Avalonia.Controls.Primitives.PopupPositioning;
 using Avalonia.Platform;
+using Avalonia.Win32.Automation;
 using Avalonia.Win32.Interop;
 
 namespace Avalonia.Win32
@@ -10,7 +12,7 @@ namespace Avalonia.Win32
         private readonly IWindowBaseImpl _parent;
         private bool _dropShadowHint = true;
         private Size? _maxAutoSize;
-
+        private AutomationProvider _automationProvider;
 
         // This is needed because we are calling virtual methods from constructors
         // One fabulous design decision leads to another, I guess
@@ -166,5 +168,15 @@ namespace Avalonia.Win32
         }
 
         public IPopupPositioner PopupPositioner { get; }
+
+        public override IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer)
+        {
+            var w = _parent;
+
+            while (w is PopupImpl popup)
+                w = popup._parent;
+
+            return ((WindowImpl)w).CreateAutomationPeerImpl(peer, this);
+        }
     }
 }

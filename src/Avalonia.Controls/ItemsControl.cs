@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Avalonia.Collections;
+using Avalonia.Controls.Automation.Peers;
 using Avalonia.Controls.Generators;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Presenters;
@@ -322,6 +323,8 @@ namespace Avalonia.Controls
 
             base.OnKeyDown(e);
         }
+
+        protected override AutomationPeer OnCreateAutomationPeer() => new ListAutomationPeer(this);
 
         /// <summary>
         /// Called when the <see cref="Items"/> property changes.

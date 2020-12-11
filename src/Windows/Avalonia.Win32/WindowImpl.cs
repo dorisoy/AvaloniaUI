@@ -87,7 +87,7 @@ namespace Avalonia.Win32
         private POINT _maxTrackSize;
         private WindowImpl _parent;        
         private ExtendClientAreaChromeHints _extendChromeHints = ExtendClientAreaChromeHints.Default;
-        private WindowProvider _automationProvider;
+        private AutomationProvider _automationProvider;
         private bool _isCloseRequested;
 
         public WindowImpl()
@@ -675,9 +675,31 @@ namespace Avalonia.Win32
             _topmost = value;
         }
 
-        public IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer)
+        public virtual IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer)
         {
-            return AutomationProviderFactory.Create(peer, _automationProvider);
+            return CreateAutomationPeerImpl(peer, this);
+        }
+
+        public IAutomationPeerImpl CreateAutomationPeerImpl(AutomationPeer peer, WindowImpl visualRoot)
+        {
+            if (peer is WindowAutomationPeer windowPeer &&
+                windowPeer.Owner is Window window &&
+                window.PlatformImpl == this)
+            {
+                return _automationProvider ??= new WindowProvider(this, windowPeer);
+            }
+            else
+            {
+                if (_automationProvider is null)
+                {
+                    ControlAutomationPeer.GetOrCreatePeer((Control)_owner);
+                }
+
+                if (_automationProvider is WindowProvider windowProvider)
+                    return AutomationProviderFactory.Create(peer, visualRoot, windowProvider);
+                else
+                    throw new InvalidOperationException("Unable to create automation peer.");
+            }
         }
 
         protected virtual IntPtr CreateWindowOverride(ushort atom)
@@ -1255,12 +1277,12 @@ namespace Avalonia.Win32
         /// <inheritdoc/>
         public AcrylicPlatformCompensationLevels AcrylicCompensationLevels { get; } = new AcrylicPlatformCompensationLevels(1, 0.8, 0);
 
-        internal WindowProvider GetOrCreateAutomationProvider()
+        internal AutomationProvider GetOrCreateAutomationProvider()
         {
             if (_automationProvider is null)
             {
                 var peer = ControlAutomationPeer.GetOrCreatePeer((Control)_owner);
-                _automationProvider = peer.PlatformImpl as WindowProvider;
+                _automationProvider = peer.PlatformImpl as AutomationProvider;
             }
 
             return _automationProvider;

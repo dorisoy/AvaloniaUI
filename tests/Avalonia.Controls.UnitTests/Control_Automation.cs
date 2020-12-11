@@ -67,7 +67,7 @@ namespace Avalonia.Controls.UnitTests
 
         private class TestAutomationPeer : ControlAutomationPeer
         {
-            public TestAutomationPeer(Control owner) : base(owner) { }
+            public TestAutomationPeer(Control owner) : base(owner, AutomationRole.Custom) { }
         }
 
         private class AutomationTestRoot : TopLevel

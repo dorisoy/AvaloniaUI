@@ -2,6 +2,6 @@
 {
     public class TabControlAutomationPeer : SelectingItemsControlAutomationPeer
     {
-        public TabControlAutomationPeer(Control owner) : base(owner) { }
+        public TabControlAutomationPeer(Control owner) : base(owner, AutomationRole.TabControl) { }
     }
 }

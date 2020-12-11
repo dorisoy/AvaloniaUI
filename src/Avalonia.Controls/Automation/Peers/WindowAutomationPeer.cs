@@ -11,7 +11,7 @@ namespace Avalonia.Controls.Automation.Peers
         IRootAutomationPeer
     {
         public WindowAutomationPeer(Control owner)
-            : base(owner) 
+            : base(owner, AutomationRole.Window)
         {
             KeyboardDevice.Instance.PropertyChanged += KeyboardDevicePropertyChanged;
         }

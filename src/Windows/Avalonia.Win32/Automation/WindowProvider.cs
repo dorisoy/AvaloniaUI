@@ -14,7 +14,7 @@ namespace Avalonia.Win32.Automation
         private bool _focusValid;
 
         public WindowProvider(WindowImpl owner, WindowAutomationPeer peer)
-            : base(peer)
+            : base(peer, owner)
         {
             Owner = owner ?? throw new ArgumentNullException(nameof(owner));
         }
