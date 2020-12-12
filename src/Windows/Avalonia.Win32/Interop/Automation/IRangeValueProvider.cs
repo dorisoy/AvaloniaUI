@@ -6,7 +6,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("36dc7aef-33e6-4691-afe1-2be7274b3d33")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IRangeValueProvider
+    public interface IRangeValueProvider
     {
         void SetValue(double value);
         double Value { get; }

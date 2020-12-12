@@ -6,7 +6,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("d02541f1-fb81-4d64-ae32-f520f8a6dbd1")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IGridItemProvider
+    public interface IGridItemProvider
     {
         int Row { get; }
         int Column { get; }

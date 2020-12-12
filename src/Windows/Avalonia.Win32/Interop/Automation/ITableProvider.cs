@@ -15,7 +15,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("9c860395-97b3-490a-b52a-858cc22af166")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface ITableProvider : IGridProvider
+    public interface ITableProvider : IGridProvider
     {
         IRawElementProviderSimple [] GetRowHeaders();
         IRawElementProviderSimple [] GetColumnHeaders();

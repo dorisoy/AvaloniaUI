@@ -28,7 +28,8 @@ namespace Avalonia.Win32.Automation
         IScrollProvider,
         IScrollItemProvider,
         ISelectionProvider,
-        ISelectionItemProvider
+        ISelectionItemProvider,
+        IToggleProvider
     {
         private readonly UiaControlTypeId _controlType;
         private readonly bool _isControlElement;
@@ -154,6 +155,18 @@ namespace Avalonia.Win32.Automation
             get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.Extent.Height > x.Viewport.Height);
         }
 
+        ToggleState IToggleProvider.ToggleState
+        {
+            get
+            {
+                return InvokeSync<IToggleableAutomationPeer, bool?>(x => x.GetToggleState()) switch
+                {
+                    true => ToggleState.On,
+                    false => ToggleState.Off,
+                    null => ToggleState.Indeterminate,
+                };
+            }
+        }
         public void Dispose()
         {
             if (_isDisposed)
@@ -195,6 +208,7 @@ namespace Avalonia.Win32.Automation
                 UiaPatternId.ScrollItem => this,
                 UiaPatternId.Selection => Peer is ISelectingAutomationPeer ? this : null,
                 UiaPatternId.SelectionItem => Peer is ISelectableAutomationPeer ? this : null,
+                UiaPatternId.Toggle => Peer is IToggleableAutomationPeer ? this : null,
                 _ => null,
             };
         }
@@ -329,6 +343,8 @@ namespace Avalonia.Win32.Automation
         {
             InvokeSync(() => Peer.BringIntoView());
         }
+
+        void IToggleProvider.Toggle() => InvokeSync<IToggleableAutomationPeer>(x => x.Toggle());
 
         protected void InvokeSync(Action action)
         {

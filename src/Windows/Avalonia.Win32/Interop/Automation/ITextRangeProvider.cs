@@ -22,7 +22,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("5347ad7b-c355-46f8-aff5-909033582f63")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface ITextRangeProvider
+    public interface ITextRangeProvider
 
     {
         ITextRangeProvider Clone();

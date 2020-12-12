@@ -44,6 +44,7 @@ namespace Avalonia.Win32.Automation
             var uiaControlType = role switch
             {
                 AutomationRole.Button => UiaControlTypeId.Button,
+                AutomationRole.CheckBox => UiaControlTypeId.CheckBox,
                 AutomationRole.ComboBox => UiaControlTypeId.ComboBox,
                 AutomationRole.Group => UiaControlTypeId.Group,
                 AutomationRole.List => UiaControlTypeId.List,
@@ -54,6 +55,7 @@ namespace Avalonia.Win32.Automation
                 AutomationRole.TabControl => UiaControlTypeId.Tab,
                 AutomationRole.TabItem => UiaControlTypeId.TabItem,
                 AutomationRole.Text => UiaControlTypeId.Text,
+                AutomationRole.Toggle => UiaControlTypeId.Button,
                 _ => UiaControlTypeId.Custom,
             };
 

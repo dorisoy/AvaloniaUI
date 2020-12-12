@@ -6,7 +6,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("2360c714-4bf1-4b26-ba65-9b21316127eb")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IScrollItemProvider
+    public interface IScrollItemProvider
     {
         void ScrollIntoView();
     }

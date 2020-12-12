@@ -6,7 +6,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("6829ddc4-4f91-4ffa-b86f-bd3e2987cb4c")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface ITransformProvider
+    public interface ITransformProvider
     {
         void Move( double x, double y );
         void Resize( double width, double height );

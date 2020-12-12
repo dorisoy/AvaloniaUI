@@ -6,7 +6,7 @@ namespace Avalonia.Win32.Interop.Automation
     [Flags]
     [ComVisible(true)]
     [Guid("3d9e3d8f-bfb0-484f-84ab-93ff4280cbc4")]
-    internal enum SupportedTextSelection
+    public enum SupportedTextSelection
     {
         None,
         Single,
@@ -16,7 +16,7 @@ namespace Avalonia.Win32.Interop.Automation
     [ComVisible(true)]
     [Guid("3589c92c-63f3-4367-99bb-ada653b77cf2")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface ITextProvider
+    public interface ITextProvider
     {
         ITextRangeProvider [] GetSelection();
         ITextRangeProvider [] GetVisibleRanges();
