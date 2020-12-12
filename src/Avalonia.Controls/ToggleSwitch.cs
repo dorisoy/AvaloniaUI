@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls.Metadata;
+﻿using Avalonia.Controls.Automation.Peers;
+using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
@@ -173,7 +174,12 @@ namespace Avalonia.Controls
                 UpdateKnobPos(IsChecked.Value);
             }
         }
-        
+
+        protected override AutomationPeer OnCreateAutomationPeer()
+        {
+            return new ToggleButtonAutomationPeer(this, AutomationRole.CheckBox);
+        }
+
         private void KnobsPanel_PointerPressed(object sender, Input.PointerPressedEventArgs e)
         {
             _switchStartPoint = e.GetPosition(_switchKnob);

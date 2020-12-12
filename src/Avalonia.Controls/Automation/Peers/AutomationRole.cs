@@ -17,6 +17,7 @@
         TabControl,
         TabItem,
         Text,
+        Toggle,
         Window,
     }
 }

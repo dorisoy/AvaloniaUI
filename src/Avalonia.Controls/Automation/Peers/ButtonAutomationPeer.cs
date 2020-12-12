@@ -5,8 +5,8 @@ namespace Avalonia.Controls.Automation.Peers
     public class ButtonAutomationPeer : ContentControlAutomationPeer,
         IInvocableAutomationPeer
     {
-        public ButtonAutomationPeer(Control owner)
-            : base(owner, AutomationRole.Button) 
+        public ButtonAutomationPeer(Control owner, AutomationRole role = AutomationRole.Button)
+            : base(owner, role) 
         {
         }
         
