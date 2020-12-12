@@ -73,12 +73,10 @@ namespace Avalonia.Win32.Automation
 
                     var provider = (AutomationProvider)newFocusPeer.PlatformImpl!;
                     UiaCoreProviderApi.UiaRaiseAutomationEvent(provider, (int)UiaEventId.AutomationFocusChanged);
-                    System.Diagnostics.Debug.WriteLine($"Focus changed from {oldFocusPeer} to {newFocusPeer}");
                 }
                 else
                 {
                     _focusPeer = null;
-                    System.Diagnostics.Debug.WriteLine($"Focus changed from {oldFocusPeer} to null");
                 }
             }
         }
