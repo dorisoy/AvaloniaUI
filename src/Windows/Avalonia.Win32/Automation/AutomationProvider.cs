@@ -22,6 +22,7 @@ namespace Avalonia.Win32.Automation
     internal class AutomationProvider : MarshalByRefObject,
         IAutomationPeerImpl,
         IRawElementProviderSimple,
+        IRawElementProviderSimple2,
         IRawElementProviderFragment,
         IExpandCollapseProvider,
         IInvokeProvider,
@@ -281,6 +282,8 @@ namespace Avalonia.Win32.Automation
 
         public override string ToString() => _className!;
         IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots() => null;
+        void IRawElementProviderSimple2.ShowContextMenu() => InvokeSync(() => Peer.ShowContextMenu());
+
         void IExpandCollapseProvider.Expand() => InvokeSync<IOpenCloseAutomationPeer>(x => x.Open());
         void IExpandCollapseProvider.Collapse() => InvokeSync<IOpenCloseAutomationPeer>(x => x.Close());
         void IInvokeProvider.Invoke() => InvokeSync<IInvocableAutomationPeer>(x => x.Invoke());

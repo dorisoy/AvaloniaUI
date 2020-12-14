@@ -246,6 +246,7 @@ namespace Avalonia.Controls
         /// <summary>
         /// Opens the menu.
         /// </summary>
+        [Obsolete("Use Open(Control)")]
         public override void Open() => throw new NotSupportedException();
 
         /// <summary>

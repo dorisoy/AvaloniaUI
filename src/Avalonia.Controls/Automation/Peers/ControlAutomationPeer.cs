@@ -166,16 +166,37 @@ namespace Avalonia.Controls.Automation.Peers
         protected override bool IsEnabledCore() => Owner.IsEnabled;
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
+        
+        protected override bool ShowContextMenuCore()
+        {
+            var c = Owner;
+
+            while (c is object)
+            {
+                if (c.ContextMenu is object)
+                {
+                    c.ContextMenu.Open(c);
+                    return true;
+                }
+
+                c = c.Parent as Control;
+            }
+
+            return false;
+        }
 
         private IPlatformAutomationInterface GetPlatformImplFactory()
         {
-            var root = Owner.GetVisualRoot() as TopLevel;
+            var c = (ILogical)Owner;
 
-            while (root is object)
+            while (c.LogicalParent is object)
             {
-                if (root?.PlatformImpl is IPlatformAutomationInterface i)
-                    return i;
-                root = (root as IHostedVisualTreeRoot)?.Host?.GetVisualRoot() as TopLevel;
+                c = c.LogicalParent;
+            }
+
+            if (c is TopLevel root && root.PlatformImpl is IPlatformAutomationInterface i)
+            {
+                return i;
             }
 
             throw new InvalidOperationException("Cannot create automation peer for non-rooted control.");

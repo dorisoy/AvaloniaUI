@@ -102,6 +102,12 @@ namespace Avalonia.Controls.Automation.Peers
         /// </summary>
         public void SetFocus() => SetFocusCore();
 
+        /// <summary>
+        /// Shows the context menu for the element that is associated with this automation peer.
+        /// </summary>
+        /// <returns>true if a context menu is present for the element; otherwise false.</returns>
+        public bool ShowContextMenu() => ShowContextMenuCore();
+
         protected abstract void BringIntoViewCore();
         protected abstract IAutomationPeerImpl CreatePlatformImplCore();
         protected abstract Rect GetBoundingRectangleCore();
@@ -115,6 +121,7 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract bool IsEnabledCore();
         protected abstract bool IsKeyboardFocusableCore();
         protected abstract void SetFocusCore();
+        protected abstract bool ShowContextMenuCore();
 
         protected virtual void Dispose(bool disposing)
         {
