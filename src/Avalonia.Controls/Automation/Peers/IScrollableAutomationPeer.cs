@@ -2,9 +2,10 @@
 {
     public interface IScrollableAutomationPeer
     {
-        Size Extent { get; }
-        Vector Offset { get; set; }
-        Size Viewport { get; }
+        Size GetExtent();
+        Vector GetOffset();
+        Size GetViewport();
+        void SetOffset(Vector value);
         void PageUp();
         void PageDown();
         void PageLeft();

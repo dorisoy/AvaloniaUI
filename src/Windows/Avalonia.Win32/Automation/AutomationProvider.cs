@@ -113,13 +113,13 @@ namespace Avalonia.Win32.Automation
         double IScrollProvider.HorizontalScrollPercent
         {
             get => InvokeSync<IScrollableAutomationPeer, double>(
-                x => x.Offset.X * 100 / (x.Extent.Width - x.Viewport.Width));
+                x => x.GetOffset().X * 100 / (x.GetExtent().Width - x.GetViewport().Width));
         }
 
         double IScrollProvider.VerticalScrollPercent
         {
             get => InvokeSync<IScrollableAutomationPeer, double>(
-                x => x.Offset.Y * 100 / (x.Extent.Height - x.Viewport.Height));
+                x => x.GetOffset().Y * 100 / (x.GetExtent().Height - x.GetViewport().Height));
         }
 
         double IScrollProvider.HorizontalViewSize
@@ -128,9 +128,9 @@ namespace Avalonia.Win32.Automation
             {
                 return InvokeSync<IScrollableAutomationPeer, double>(x =>
                 {
-                    if (MathUtilities.IsZero(x.Extent.Width))
+                    if (MathUtilities.IsZero(x.GetExtent().Width))
                         return 100;
-                    return Math.Min(100, x.Viewport.Width / x.Extent.Width);
+                    return Math.Min(100, x.GetViewport().Width / x.GetExtent().Width);
                 });
             }
         }
@@ -141,20 +141,20 @@ namespace Avalonia.Win32.Automation
             {
                 return InvokeSync<IScrollableAutomationPeer, double>(x =>
                 {
-                    if (MathUtilities.IsZero(x.Extent.Height))
+                    if (MathUtilities.IsZero(x.GetExtent().Height))
                         return 100;
-                    return Math.Min(100, x.Viewport.Height / x.Extent.Height);
+                    return Math.Min(100, x.GetViewport().Height / x.GetExtent().Height);
                 });
             }
         }
         bool IScrollProvider.HorizontallyScrollable
         {
-            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.Extent.Width > x.Viewport.Width);
+            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.GetExtent().Width > x.GetViewport().Width);
         }
 
         bool IScrollProvider.VerticallyScrollable
         {
-            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.Extent.Height > x.Viewport.Height);
+            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.GetExtent().Height > x.GetViewport().Height);
         }
 
         ToggleState IToggleProvider.ToggleState
@@ -170,7 +170,7 @@ namespace Avalonia.Win32.Automation
             }
         }
 
-        string? IValueProvider.Value => InvokeSync<IStringValueAutomationPeer, string>(x => x.GetValue());
+        string? IValueProvider.Value => InvokeSync<IStringValueAutomationPeer, string?>(x => x.GetValue());
         bool IValueProvider.IsReadOnly => false;
 
         public void Dispose()
@@ -338,13 +338,16 @@ namespace Avalonia.Win32.Automation
         {
             InvokeSync<IScrollableAutomationPeer>(x =>
             {
+                var extent = x.GetExtent();
+                var offset = x.GetOffset();
+                var viewport = x.GetViewport();
                 var sx = horizontalPercent >= 0 && horizontalPercent <= 100 ?
-                    (x.Extent.Width - x.Viewport.Width) * horizontalPercent :
-                    x.Offset.X;
+                    (extent.Width - viewport.Width) * horizontalPercent :
+                    offset.X;
                 var sy = verticalPercent >= 0 && verticalPercent <= 100 ?
-                    (x.Extent.Height - x.Viewport.Height) * verticalPercent :
-                    x.Offset.Y;
-                x.Offset = new Vector(sx, sy);
+                    (extent.Height - viewport.Height) * verticalPercent :
+                    offset.Y;
+                x.SetOffset(new Vector(sx, sy));
             });
         }
 
@@ -355,7 +358,7 @@ namespace Avalonia.Win32.Automation
 
         void IToggleProvider.Toggle() => InvokeSync<IToggleableAutomationPeer>(x => x.Toggle());
 
-        void IValueProvider.SetValue(string value) => InvokeSync<IStringValueAutomationPeer>(x => x.SetValue(value));
+        void IValueProvider.SetValue(string? value) => InvokeSync<IStringValueAutomationPeer>(x => x.SetValue(value));
 
         protected void InvokeSync(Action action)
         {

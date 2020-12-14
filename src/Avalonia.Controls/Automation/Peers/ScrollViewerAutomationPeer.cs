@@ -7,15 +7,10 @@
         {
         }
 
-        public Size Extent => Owner.GetValue(ScrollViewer.ExtentProperty);
-        public Size Viewport => Owner.GetValue(ScrollViewer.ViewportProperty);
-
-        public Vector Offset 
-        {
-            get => Owner.GetValue(ScrollViewer.OffsetProperty);
-            set => Owner.SetValue(ScrollViewer.OffsetProperty, value);
-        }
-
+        public Size GetExtent() => Owner.GetValue(ScrollViewer.ExtentProperty);
+        public Size GetViewport() => Owner.GetValue(ScrollViewer.ViewportProperty);
+        public Vector GetOffset() => Owner.GetValue(ScrollViewer.OffsetProperty);
+        public void SetOffset(Vector value) => Owner.SetValue(ScrollViewer.OffsetProperty, value);
         public void LineDown() => (Owner as ScrollViewer)?.LineDown();
         public void LineLeft() => (Owner as ScrollViewer)?.LineLeft();
         public void LineRight() => (Owner as ScrollViewer)?.LineRight();

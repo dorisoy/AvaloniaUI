@@ -27,19 +27,10 @@ namespace Avalonia.Controls.Automation.Peers
             }
         }
 
-        Size IScrollableAutomationPeer.Extent => Scroller?.Extent ?? default;
-        Size IScrollableAutomationPeer.Viewport => Scroller?.Viewport ?? default;
-
-        Vector IScrollableAutomationPeer.Offset
-        {
-            get => Scroller?.Offset ?? default;
-            set
-            {
-                if (Scroller is object)
-                    Scroller.Offset = value;
-            }
-        }
-
+        Size IScrollableAutomationPeer.GetExtent() => Scroller?.GetExtent() ?? default;
+        Size IScrollableAutomationPeer.GetViewport() => Scroller?.GetViewport() ?? default;
+        Vector IScrollableAutomationPeer.GetOffset() => Scroller?.GetOffset() ?? default;
+        void IScrollableAutomationPeer.SetOffset(Vector value) => Scroller?.SetOffset(value);
         void IScrollableAutomationPeer.LineDown() => Scroller?.LineDown();
         void IScrollableAutomationPeer.LineLeft() => Scroller?.LineLeft();
         void IScrollableAutomationPeer.LineRight() => Scroller?.LineRight();
