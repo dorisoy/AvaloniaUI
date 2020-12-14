@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+#nullable enable
+
 namespace Avalonia.Win32.Interop.Automation
 {
     [ComVisible(true)]
@@ -8,8 +10,8 @@ namespace Avalonia.Win32.Interop.Automation
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IValueProvider
     {
-        void SetValue([MarshalAs(UnmanagedType.LPWStr)] string value);
-        string Value { get; }
+        void SetValue([MarshalAs(UnmanagedType.LPWStr)] string? value);
+        string? Value { get; }
         bool IsReadOnly { [return: MarshalAs(UnmanagedType.Bool)] get; }
     }
 }

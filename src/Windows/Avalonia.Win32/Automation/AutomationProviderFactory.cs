@@ -46,6 +46,7 @@ namespace Avalonia.Win32.Automation
                 AutomationRole.Button => UiaControlTypeId.Button,
                 AutomationRole.CheckBox => UiaControlTypeId.CheckBox,
                 AutomationRole.ComboBox => UiaControlTypeId.ComboBox,
+                AutomationRole.Edit => UiaControlTypeId.Edit,
                 AutomationRole.Group => UiaControlTypeId.Group,
                 AutomationRole.List => UiaControlTypeId.List,
                 AutomationRole.ListItem => UiaControlTypeId.ListItem,

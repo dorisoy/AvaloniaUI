@@ -7,6 +7,7 @@
         CheckBox,
         ComboBox,
         Custom,
+        Edit,
         Group,
         Image,
         List,
