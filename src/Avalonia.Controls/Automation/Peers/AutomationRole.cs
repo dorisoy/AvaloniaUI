@@ -8,6 +8,7 @@
         ComboBox,
         Custom,
         Group,
+        Image,
         List,
         ListItem,
         Menu,
