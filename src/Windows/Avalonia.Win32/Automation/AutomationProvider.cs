@@ -38,6 +38,7 @@ namespace Avalonia.Win32.Automation
         private readonly WeakReference<AutomationPeer> _peer;
         private readonly WindowImpl _visualRoot;
         private readonly IRawElementProviderFragmentRoot _fragmentRoot;
+        private readonly int[] _runtimeId;
         private AutomationProvider? _parent;
         private Rect _boundingRect;
         private List<AutomationProvider>? _children;
@@ -68,6 +69,7 @@ namespace Avalonia.Win32.Automation
             _isControlElement = isControlElement;
             _visualRoot = visualRoot ?? throw new ArgumentNullException(nameof(visualRoot));
             _fragmentRoot = fragmentRoot ?? throw new ArgumentNullException(nameof(fragmentRoot));
+            _runtimeId = new int[] { 3, Peer.GetHashCode() };
         }
 
         protected AutomationProvider(AutomationPeer peer, WindowImpl visualRoot)
@@ -76,8 +78,10 @@ namespace Avalonia.Win32.Automation
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = UiaControlTypeId.Window;
+            _isControlElement = true;
             _visualRoot = visualRoot;
             _fragmentRoot = (IRawElementProviderFragmentRoot)this;
+            _runtimeId = new int[] { 3, Peer.GetHashCode() };
         }
 
         public AutomationPeer Peer
@@ -197,7 +201,11 @@ namespace Avalonia.Win32.Automation
                 return;
 
             _childrenValid = false;
-            UiaCoreProviderApi.UiaRaiseStructureChangedEvent(this, StructureChangeType.ChildrenInvalidated, null, 0);
+            UiaCoreProviderApi.UiaRaiseStructureChangedEvent(
+                this,
+                StructureChangeType.ChildrenInvalidated,
+                _runtimeId,
+                _runtimeId.Length);
         }
 
         [return: MarshalAs(UnmanagedType.IUnknown)]
@@ -225,12 +233,13 @@ namespace Avalonia.Win32.Automation
             if (_isDisposed)
                 return null;
 
-            object? result = (UiaPropertyId)propertyId switch
+            return (UiaPropertyId)propertyId switch
             {
                 UiaPropertyId.ClassName => _className,
                 UiaPropertyId.ClickablePoint => new[] { BoundingRectangle.Center.X, BoundingRectangle.Center.Y },
                 UiaPropertyId.ControlType => _controlType,
                 UiaPropertyId.Culture => CultureInfo.CurrentCulture.LCID,
+                UiaPropertyId.FrameworkId => "Avalonia",
                 UiaPropertyId.HasKeyboardFocus => _hasKeyboardFocus,
                 UiaPropertyId.IsContentElement => _isControlElement,
                 UiaPropertyId.IsControlElement => _isControlElement,
@@ -239,14 +248,12 @@ namespace Avalonia.Win32.Automation
                 UiaPropertyId.LocalizedControlType => _controlType.ToString().ToLowerInvariant(),
                 UiaPropertyId.Name => _name,
                 UiaPropertyId.ProcessId => Process.GetCurrentProcess().Id,
-                UiaPropertyId.RuntimeId => GetRuntimeId(),
+                UiaPropertyId.RuntimeId => _runtimeId,
                 _ => null,
             };
-
-            return result;
         }
 
-        public int[]? GetRuntimeId() => new int[] { 3, Peer.GetHashCode() };
+        public int[]? GetRuntimeId() => _runtimeId;
 
         public virtual IRawElementProviderFragment? Navigate(NavigateDirection direction)
         {

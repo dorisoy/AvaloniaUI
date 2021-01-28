@@ -1,16 +1,15 @@
-#nullable enable
-
-using System;
 using System.ComponentModel;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+
+#nullable enable
 
 namespace Avalonia.Controls.Automation.Peers
 {
     public class WindowAutomationPeer : ControlAutomationPeer,
         IRootAutomationPeer
     {
-        public WindowAutomationPeer(Control owner)
+        public WindowAutomationPeer(Window owner)
             : base(owner, AutomationRole.Window)
         {
             KeyboardDevice.Instance.PropertyChanged += KeyboardDevicePropertyChanged;

@@ -686,7 +686,13 @@ namespace Avalonia.Win32
                 windowPeer.Owner is Window window &&
                 window.PlatformImpl == this)
             {
-                return _automationProvider ??= new WindowProvider(this, windowPeer);
+                if (_automationProvider is null)
+                {
+                    _automationProvider = new WindowProvider(this, windowPeer);
+                    var _ = _automationProvider.Update(false);
+                }
+
+                return _automationProvider;
             }
             else
             {

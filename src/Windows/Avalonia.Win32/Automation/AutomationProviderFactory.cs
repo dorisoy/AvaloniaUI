@@ -23,6 +23,8 @@ namespace Avalonia.Win32.Automation
                 throw new AvaloniaInternalException($"Peer already has a platform implementation: {peer}.");
             }
 
+            AutomationProvider result;
+
             if (peer is WindowAutomationPeer windowPeer)
             {
                 if (fragmentRoot is object)
@@ -31,38 +33,40 @@ namespace Avalonia.Win32.Automation
                 }
 
                 var windowImpl = (WindowImpl)((Window)windowPeer.Owner).PlatformImpl;
-                return new WindowProvider(windowImpl, windowPeer);
+                result = new WindowProvider(windowImpl, windowPeer);
             }
-
-            if (fragmentRoot is null)
+            else if (fragmentRoot is null)
             {
                 throw new ArgumentNullException("Root may only be null for root automation peers.");
             }
-
-            var role = peer.GetRole();
-            var isControlElement = role != AutomationRole.None;
-            var uiaControlType = role switch
+            else
             {
-                AutomationRole.Button => UiaControlTypeId.Button,
-                AutomationRole.CheckBox => UiaControlTypeId.CheckBox,
-                AutomationRole.ComboBox => UiaControlTypeId.ComboBox,
-                AutomationRole.Edit => UiaControlTypeId.Edit,
-                AutomationRole.Group => UiaControlTypeId.Group,
-                AutomationRole.List => UiaControlTypeId.List,
-                AutomationRole.ListItem => UiaControlTypeId.ListItem,
-                AutomationRole.Menu => UiaControlTypeId.Menu,
-                AutomationRole.MenuItem => UiaControlTypeId.MenuItem,
-                AutomationRole.Slider => UiaControlTypeId.Slider,
-                AutomationRole.TabControl => UiaControlTypeId.Tab,
-                AutomationRole.TabItem => UiaControlTypeId.TabItem,
-                AutomationRole.Text => UiaControlTypeId.Text,
-                AutomationRole.Toggle => UiaControlTypeId.Button,
-                _ => UiaControlTypeId.Custom,
-            };
+                var role = peer.GetRole();
+                var isControlElement = role != AutomationRole.None;
+                var uiaControlType = role switch
+                {
+                    AutomationRole.Button => UiaControlTypeId.Button,
+                    AutomationRole.CheckBox => UiaControlTypeId.CheckBox,
+                    AutomationRole.ComboBox => UiaControlTypeId.ComboBox,
+                    AutomationRole.Edit => UiaControlTypeId.Edit,
+                    AutomationRole.Group => UiaControlTypeId.Group,
+                    AutomationRole.List => UiaControlTypeId.List,
+                    AutomationRole.ListItem => UiaControlTypeId.ListItem,
+                    AutomationRole.Menu => UiaControlTypeId.Menu,
+                    AutomationRole.MenuItem => UiaControlTypeId.MenuItem,
+                    AutomationRole.Slider => UiaControlTypeId.Slider,
+                    AutomationRole.TabControl => UiaControlTypeId.Tab,
+                    AutomationRole.TabItem => UiaControlTypeId.TabItem,
+                    AutomationRole.Text => UiaControlTypeId.Text,
+                    AutomationRole.Toggle => UiaControlTypeId.Button,
+                    _ => UiaControlTypeId.Custom,
+                };
 
-            var result = peer is ControlAutomationPeer c && c.Owner is PopupRoot ?
-                new PopupProvider(peer, uiaControlType, isControlElement, visualRoot, fragmentRoot) :
-                new AutomationProvider(peer, uiaControlType, isControlElement, visualRoot, fragmentRoot);
+                result = peer is ControlAutomationPeer c && c.Owner is PopupRoot ?
+                    new PopupProvider(peer, uiaControlType, isControlElement, visualRoot, fragmentRoot) :
+                    new AutomationProvider(peer, uiaControlType, isControlElement, visualRoot, fragmentRoot);
+            }
+
             var _ = result.Update(notify: false);
             return result;
         }
