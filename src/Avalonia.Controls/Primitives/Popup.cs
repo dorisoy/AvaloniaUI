@@ -596,7 +596,17 @@ namespace Avalonia.Controls.Primitives
             {
                 if (PlacementTarget != null)
                 {
-                    FocusManager.Instance?.Focus(PlacementTarget);
+                    var e = (IControl?)PlacementTarget;
+
+                    while (e is object && (!e.Focusable || !e.IsEffectivelyEnabled || !e.IsVisible))
+                    {
+                        e = e.Parent;
+                    }
+
+                    if (e is object)
+                    {
+                        FocusManager.Instance?.Focus(e);
+                    }
                 }
                 else
                 {
