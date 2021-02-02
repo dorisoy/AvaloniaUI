@@ -1,20 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Selection;
 using Avalonia.VisualTree;
 
 #nullable enable
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public abstract class SelectingItemsControlAutomationPeer : ListAutomationPeer,
+    public abstract class SelectingItemsControlAutomationPeer : ItemsControlAutomationPeer,
         ISelectingAutomationPeer
     {
+        private ISelectionModel _selection;
+
         protected SelectingItemsControlAutomationPeer(
             Control owner,
             AutomationRole role = AutomationRole.List)
             : base(owner, role) 
-        { 
+        {
+            _selection = owner.GetValue(ListBox.SelectionProperty);
+            _selection.SelectionChanged += OwnerSelectionChanged;
+            owner.PropertyChanged += OwnerPropertyChanged;
         }
 
         public SelectionMode GetSelectionMode() => GetSelectionModeCore();
@@ -53,6 +59,21 @@ namespace Avalonia.Controls.Automation.Peers
         protected virtual SelectionMode GetSelectionModeCore()
         {
             return (Owner as SelectingItemsControl)?.GetValue(ListBox.SelectionModeProperty) ?? SelectionMode.Single;
+        }
+
+        protected virtual void OwnerPropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
+        {
+            if (e.Property == ListBox.SelectionProperty)
+            {
+                _selection.SelectionChanged -= OwnerSelectionChanged;
+                _selection = Owner.GetValue(ListBox.SelectionProperty);
+                _selection.SelectionChanged += OwnerSelectionChanged;
+            }
+        }
+
+        protected virtual void OwnerSelectionChanged(object sender, SelectionModelSelectionChangedEventArgs e)
+        {
+            PlatformImpl?.PropertyChanged();
         }
     }
 }

@@ -152,8 +152,6 @@ namespace Avalonia.Controls
         protected sealed override void OnDetachedFromVisualTreeCore(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTreeCore(e);
-            _automationPeer?.Dispose();
-            _automationPeer = null;
         }
 
         /// <inheritdoc/>

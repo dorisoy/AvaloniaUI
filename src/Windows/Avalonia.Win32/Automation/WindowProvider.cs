@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Avalonia.Controls.Automation.Peers;
+using Avalonia.VisualTree;
 using Avalonia.Win32.Interop.Automation;
 
 #nullable enable
@@ -36,6 +37,7 @@ namespace Avalonia.Win32.Automation
             {
                 var peer = (WindowAutomationPeer)Peer;
                 var focusPeer = InvokeSync(() => peer.GetFocus());
+
                 _focus = focusPeer?.PlatformImpl as AutomationProvider;
                 _focusValid = true;
             }
@@ -71,7 +73,7 @@ namespace Avalonia.Win32.Automation
                 {
                     _focusPeer = new WeakReference<AutomationPeer>(newFocusPeer);
 
-                    var oldProvider = (AutomationProvider?)oldFocusPeer?.PlatformImpl;
+                    var oldProvider = oldFocusPeer?.PlatformImpl as AutomationProvider;
                     var newProvider = (AutomationProvider)newFocusPeer.PlatformImpl!;
                     var _ = oldProvider?.Update(false);
                     _ = newProvider.Update(false);

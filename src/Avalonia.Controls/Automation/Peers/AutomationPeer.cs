@@ -9,33 +9,20 @@ namespace Avalonia.Controls.Automation.Peers
     /// <summary>
     /// Provides a base class that exposes an element to UI Automation.
     /// </summary>
-    public abstract class AutomationPeer : IDisposable
+    public abstract class AutomationPeer
     {
-        ~AutomationPeer() => Dispose(false);
+        private IAutomationPeerImpl? _platformImpl;
 
         /// <summary>
         /// Gets the platform implementation of the automation peer.
         /// </summary>
-        public IAutomationPeerImpl? PlatformImpl { get; private set; }
-
-        /// <summary>
-        /// Gets a value describing whether the automation peer has been disposed.
-        /// </summary>
-        public bool IsDisposed => PlatformImpl is null;
+        public IAutomationPeerImpl PlatformImpl => _platformImpl ??
+            throw new AvaloniaInternalException("Automation peer not yet initialized.");
 
         /// <summary>
         /// Attempts to bring the element associated with the automation peer into view.
         /// </summary>
         public void BringIntoView() => BringIntoViewCore();
-
-        /// <summary>
-        /// Releases all resources used by the automation peer.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
         /// <summary>
         /// Gets the bounding rectangle of the element that is associated with the automation peer
@@ -123,12 +110,6 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract void SetFocusCore();
         protected abstract bool ShowContextMenuCore();
 
-        protected virtual void Dispose(bool disposing)
-        {
-            PlatformImpl?.Dispose();
-            PlatformImpl = null;
-        }
-
         protected virtual AutomationPeer? GetPeerFromPointCore(Point point)
         {
             foreach (var child in GetChildren())
@@ -147,9 +128,18 @@ namespace Avalonia.Controls.Automation.Peers
                 throw new ElementNotEnabledException();
         }
 
+        protected void InvalidatePlatformImpl()
+        {
+            _platformImpl?.Dispose();
+            _platformImpl = null;
+            CreatePlatformImpl();
+        }
+
         internal void CreatePlatformImpl()
         {
-            PlatformImpl = CreatePlatformImplCore() ??
+            if (_platformImpl is object)
+                throw new AvaloniaInternalException("AutomationPeer already has a PlatformImpl.");
+            _platformImpl = CreatePlatformImplCore() ??
                 throw new InvalidOperationException("CreatePlatformImplCore returned null.");
         }
     }

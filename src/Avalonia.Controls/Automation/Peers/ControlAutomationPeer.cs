@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Avalonia.Controls.Platform;
-using Avalonia.Controls.Primitives;
 using Avalonia.LogicalTree;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
@@ -23,11 +22,14 @@ namespace Avalonia.Controls.Automation.Peers
 
         public ControlAutomationPeer(Control owner, AutomationRole role)
         {
+            Owner = owner ?? throw new ArgumentNullException("owner");
+
             _role = role;
             _invalidateChildren = InvalidateStructure;
 
-            Owner = owner ?? throw new ArgumentNullException("owner");
             owner.PropertyChanged += OwnerPropertyChanged;
+            owner.AttachedToVisualTree += OwnerVisualTreeAttachedDetached;
+            owner.DetachedFromVisualTree += OwnerVisualTreeAttachedDetached;
             
             var logicalChildren = ((ILogical)owner).LogicalChildren;
             logicalChildren.CollectionChanged += InvalidateStructure;
@@ -45,21 +47,8 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override IAutomationPeerImpl CreatePlatformImplCore()
         {
-            return GetPlatformImplFactory().CreateAutomationPeerImpl(this);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            if (!IsDisposed)
-            {
-                Owner.PropertyChanged -= OwnerPropertyChanged;
-
-                var logicalChildren = ((ILogical)Owner).LogicalChildren;
-                logicalChildren.CollectionChanged -= InvalidateStructure;
-                _children = null;
-            }
+            return GetPlatformImplFactory()?.CreateAutomationPeerImpl(this) ??
+                DetachedPlatformImpl.Instance;
         }
 
         protected override Rect GetBoundingRectangleCore()
@@ -185,42 +174,36 @@ namespace Avalonia.Controls.Automation.Peers
             return false;
         }
 
-        private IPlatformAutomationInterface GetPlatformImplFactory()
+        private IPlatformAutomationInterface? GetPlatformImplFactory()
         {
-            var c = (ILogical)Owner;
+            var root = Owner.GetVisualRoot();
 
-            while (c.LogicalParent is object)
-            {
-                c = c.LogicalParent;
-            }
+            // We only create a real (i.e. not detached) platform impl if the control is attached
+            // to the visual tree.
+            if (root is null || !root.IsVisible)
+                return null;
 
-            if (c is TopLevel root && root.PlatformImpl is IPlatformAutomationInterface i)
-            {
-                return i;
-            }
-
-            throw new InvalidOperationException("Cannot create automation peer for non-rooted control.");
+            return (root as TopLevel)?.PlatformImpl as IPlatformAutomationInterface;
         }
 
         private void InvalidateProperties()
         {
-            if (!IsDisposed)
-            {
-                _childrenValid = false;
-                PlatformImpl!.PropertyChanged();
-            }
+            _childrenValid = false;
+            PlatformImpl!.PropertyChanged();
         }
 
         private void InvalidateStructure()
         {
-            if (!IsDisposed)
-            {
-                _childrenValid = false;
-                PlatformImpl!.StructureChanged();
-            }
+            _childrenValid = false;
+            PlatformImpl!.StructureChanged();
         }
 
         private void InvalidateStructure(object sender, EventArgs e) => InvalidateStructure();
+
+        private void OwnerVisualTreeAttachedDetached(object sender, VisualTreeAttachmentEventArgs e)
+        {
+            InvalidatePlatformImpl();
+        }
 
         private void OwnerPropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
         {
@@ -230,6 +213,16 @@ namespace Avalonia.Controls.Automation.Peers
                     InvalidateProperties();
                     break;
             }
+        }
+
+        // When a control is detched from the visual tree, we use a stub platform impl.
+        internal class DetachedPlatformImpl : IAutomationPeerImpl
+        {
+            public static readonly DetachedPlatformImpl Instance = new DetachedPlatformImpl();
+            private DetachedPlatformImpl() { }
+            public void Dispose() { }
+            public void PropertyChanged() { }
+            public void StructureChanged() { }
         }
     }
 }

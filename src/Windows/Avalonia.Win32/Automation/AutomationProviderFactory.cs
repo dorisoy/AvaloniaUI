@@ -18,11 +18,6 @@ namespace Avalonia.Win32.Automation
         {
             Dispatcher.UIThread.VerifyAccess();
 
-            if (peer.PlatformImpl is object)
-            {
-                throw new AvaloniaInternalException($"Peer already has a platform implementation: {peer}.");
-            }
-
             AutomationProvider result;
 
             if (peer is WindowAutomationPeer windowPeer)

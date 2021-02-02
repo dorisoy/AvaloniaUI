@@ -2,17 +2,17 @@
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public class ListAutomationPeer : ControlAutomationPeer, IScrollableAutomationPeer
+    public class ItemsControlAutomationPeer : ControlAutomationPeer, IScrollableAutomationPeer
     {
         private bool _searchedForScrollable;
         private IScrollableAutomationPeer? _scroller;
 
-        public ListAutomationPeer(Control owner, AutomationRole role = AutomationRole.List)
+        public ItemsControlAutomationPeer(Control owner, AutomationRole role = AutomationRole.List)
             : base(owner, role)
         {
         }
 
-        private IScrollableAutomationPeer? Scroller
+        protected virtual IScrollableAutomationPeer? Scroller
         {
             get
             {

@@ -324,7 +324,7 @@ namespace Avalonia.Controls
             base.OnKeyDown(e);
         }
 
-        protected override AutomationPeer OnCreateAutomationPeer() => new ListAutomationPeer(this);
+        protected override AutomationPeer OnCreateAutomationPeer() => new ItemsControlAutomationPeer(this);
 
         /// <summary>
         /// Called when the <see cref="Items"/> property changes.
