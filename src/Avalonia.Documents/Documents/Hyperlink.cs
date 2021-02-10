@@ -50,10 +50,10 @@ namespace System.Windows.Documents
         //
         static Hyperlink()
         {
-            //DefaultStyleKeyProperty.OverrideMetadata(typeof(Hyperlink), new FrameworkPropertyMetadata(typeof(Hyperlink)));
-            //_dType = IAvaloniaObjectType.FromSystemTypeInternal(typeof(Hyperlink));
-            //FocusableProperty.OverrideMetadata(typeof(Hyperlink), new FrameworkPropertyMetadata(true));
-            //EventManager.RegisterClassHandler(typeof(Hyperlink), Mouse.QueryCursorEvent, new QueryCursorEventHandler(OnQueryCursor));
+            // TODO:DefaultStyleKeyProperty.OverrideMetadata(typeof(Hyperlink), new FrameworkPropertyMetadata(typeof(Hyperlink)));
+            // TODO:_dType = IAvaloniaObjectType.FromSystemTypeInternal(typeof(Hyperlink));
+            // TODO:FocusableProperty.OverrideMetadata(typeof(Hyperlink), new FrameworkPropertyMetadata(true));
+            // TODO:EventManager.RegisterClassHandler(typeof(Hyperlink), Mouse.QueryCursorEvent, new QueryCursorEventHandler(OnQueryCursor));
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace System.Windows.Documents
         /// <summary>
         /// This method does exactly the same operation as clicking the Hyperlink with the mouse, except the navigation is not treated as user-initiated.
         /// </summary>
-        //public void DoClick()
+        //TODO: public void DoClick()
         //{
         //    DoNonUserInitiatedNavigation(this);
         //}
@@ -171,7 +171,7 @@ namespace System.Windows.Documents
 
         // Returns true when this Hyperlink is hosted by an enabled
         // TextEditor (eg, within a RichTextBox).
-        //private bool IsEditable
+        //TODO: private bool IsEditable
         //{
         //    get
         //    {
@@ -187,7 +187,7 @@ namespace System.Windows.Documents
         ///     The reason this property is overridden is so that Hyperlink
         ///     can infuse the value for CanExecute into it.
         /// </remarks>
-        //protected override bool IsEnabledCore
+        //TODO: protected override bool IsEnabledCore
         //{
         //    get
         //    {
@@ -224,7 +224,7 @@ namespace System.Windows.Documents
         /////     Flags:              None
         /////     Default Value:      null
         ///// </summary>
-        //public static readonly AvaloniaProperty CommandTargetProperty =
+        //TODO: public static readonly AvaloniaProperty CommandTargetProperty =
         //        AvaloniaProperty.Register(
         //                "CommandTarget",
         //                typeof(IInputElement),
@@ -235,7 +235,7 @@ namespace System.Windows.Documents
         /////     The target element on which to fire the command.
         ///// </summary>
         //[Bindable(true), Category("Action")]
-        //public IInputElement CommandTarget
+        //TODO: public IInputElement CommandTarget
         //{
         //    get
         //    {
@@ -273,7 +273,7 @@ namespace System.Windows.Documents
         /// <param name="d">Element to coerce NavigateUri for.</param>
         /// <param name="value">New value for NavigateUri.</param>
         /// <returns>Coerced value.</returns>
-        //internal static Uri CoerceNavigateUri(IAvaloniaObject d, Uri value)
+        //TODO: internal static Uri CoerceNavigateUri(IAvaloniaObject d, Uri value)
         //{
         //    //
         //    // If the element for which NavigateUri is being changed is the protected element,
@@ -317,7 +317,7 @@ namespace System.Windows.Documents
         ///// <summary>
         ///// Contains the target window to navigate when hyperlink is clicked
         ///// </summary>
-        //public static readonly AvaloniaProperty TargetNameProperty
+        //TODO: public static readonly AvaloniaProperty TargetNameProperty
         //    = AvaloniaProperty.Register("TargetName", typeof(String), typeof(Hyperlink),
         //                                  new FrameworkPropertyMetadata(string.Empty));
 
@@ -329,7 +329,7 @@ namespace System.Windows.Documents
         //    LocalizationCategory.None,
         //    Modifiability = Modifiability.Unmodifiable)
         //]
-        //public string TargetName
+        //TODO: public string TargetName
         //{
         //    get
         //    {
@@ -359,7 +359,7 @@ namespace System.Windows.Documents
         /// <summary>
         /// Navigate Event
         /// </summary>
-        //public static readonly RoutedEvent RequestNavigateEvent = EventManager.RegisterRoutedEvent(
+        //TODO: public static readonly RoutedEvent RequestNavigateEvent = EventManager.RegisterRoutedEvent(
         //                                            "RequestNavigate",
         //                                            RoutingStrategy.Bubble,
         //                                            typeof(RequestNavigateEventHandler),
@@ -368,7 +368,7 @@ namespace System.Windows.Documents
         /// <summary>
         /// Add / Remove RequestNavigateEvent handler
         /// </summary>
-        //public event RequestNavigateEventHandler RequestNavigate
+        //TODO: public event RequestNavigateEventHandler RequestNavigate
         //{
         //    add
         //    {
@@ -383,18 +383,18 @@ namespace System.Windows.Documents
         /// <summary>
         /// Event correspond to left mouse button click
         /// </summary>
-        //public static readonly RoutedEvent ClickEvent = System.Windows.Controls.Primitives.ButtonBase.ClickEvent.AddOwner(typeof(Hyperlink));
+        //TODO: public static readonly RoutedEvent ClickEvent = System.Windows.Controls.Primitives.ButtonBase.ClickEvent.AddOwner(typeof(Hyperlink));
 
         /// <summary>
         /// Add / Remove ClickEvent handler
         /// </summary>
         //[Category("Behavior")]
-        //public event RoutedEventHandler Click { add { AddHandler(ClickEvent, value); } remove { RemoveHandler(ClickEvent, value); } }
+        //TODO: public event RoutedEventHandler Click { add { AddHandler(ClickEvent, value); } remove { RemoveHandler(ClickEvent, value); } }
 
         /// <summary>
         /// StatusBar event
         /// </summary>
-        //internal static readonly RoutedEvent RequestSetStatusBarEvent = EventManager.RegisterRoutedEvent(
+        //TODO: internal static readonly RoutedEvent RequestSetStatusBarEvent = EventManager.RegisterRoutedEvent(
         //                                            "RequestSetStatusBar",
         //                                            RoutingStrategy.Bubble,
         //                                            typeof(RoutedEventHandler),
@@ -415,7 +415,7 @@ namespace System.Windows.Documents
         /// </summary>
         /// <param name="e">Event arguments</param>
         /// <remarks>Kept around for backward compatibility in derived classes.</remarks>
-        //protected internal override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        //TODO: protected internal override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         //{
         //    base.OnMouseLeftButtonDown(e);
 
@@ -434,7 +434,7 @@ namespace System.Windows.Documents
         /// up since OnNavigateUriChanged isn't ever called. However, we want to have the
         /// sequence of commands and Click event triggered even in this case for Hyperlink.
         /// </remarks>
-        //protected internal override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        //TODO: protected internal override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         //{
         //    base.OnMouseLeftButtonUp(e);
 
@@ -728,7 +728,7 @@ namespace System.Windows.Documents
         // QueryCursorEvent callback.
         // If this Hyperlink is editable, use the editor cursor unless
         // the control key is down.
-        //private static void OnQueryCursor(object sender, QueryCursorEventArgs e)
+        //TODO: private static void OnQueryCursor(object sender, QueryCursorEventArgs e)
         //{
         //    Hyperlink link = (Hyperlink)sender;
 
@@ -789,7 +789,7 @@ namespace System.Windows.Documents
         /// <summary>
         /// Records the IsPressed property attached to elements with hyperlink functionality.
         /// </summary>
-        //private static readonly AvaloniaProperty IsHyperlinkPressedProperty =
+        //TODO: private static readonly AvaloniaProperty IsHyperlinkPressedProperty =
         //        AvaloniaProperty.Register(
         //                "IsHyperlinkPressed",
         //                typeof(bool),
