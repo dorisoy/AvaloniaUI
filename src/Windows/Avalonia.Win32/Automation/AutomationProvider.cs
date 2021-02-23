@@ -6,12 +6,10 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Avalonia.Controls.Automation;
 using Avalonia.Controls.Automation.Peers;
 using Avalonia.Platform;
 using Avalonia.Threading;
-using Avalonia.Utilities;
 using Avalonia.Win32.Interop.Automation;
 
 #nullable enable
@@ -19,20 +17,12 @@ using Avalonia.Win32.Interop.Automation;
 namespace Avalonia.Win32.Automation
 {
     [ComVisible(true)]
-    internal class AutomationProvider : MarshalByRefObject,
+    internal partial class AutomationProvider : MarshalByRefObject,
         IAutomationPeerImpl,
         IRawElementProviderSimple,
         IRawElementProviderSimple2,
         IRawElementProviderFragment,
-        IExpandCollapseProvider,
-        IInvokeProvider,
-        IRangeValueProvider,
-        IScrollProvider,
-        IScrollItemProvider,
-        ISelectionProvider,
-        ISelectionItemProvider,
-        IToggleProvider,
-        IValueProvider
+        IInvokeProvider
     {
         private readonly UiaControlTypeId _controlType;
         private readonly bool _isControlElement;
@@ -49,11 +39,6 @@ namespace Avalonia.Win32.Automation
         private bool _isKeyboardFocusable;
         private bool _isEnabled;
         private string? _name;
-        private ExpandCollapseState _expandCollapseState;
-        private bool _canSelectMultiple;
-        private bool _isSelectionRequired;
-        private bool _isSelected;
-        private IRawElementProviderSimple[]? _selection;
         private bool _isDisposed;
 
         public AutomationProvider(
@@ -109,81 +94,6 @@ namespace Avalonia.Win32.Automation
         
         public ProviderOptions ProviderOptions => ProviderOptions.ServerSideProvider;
         public virtual IRawElementProviderSimple? HostRawElementProvider => null;
-        bool ISelectionProvider.CanSelectMultiple => _canSelectMultiple;
-        bool ISelectionProvider.IsSelectionRequired => _isSelectionRequired;
-        bool ISelectionItemProvider.IsSelected => _isSelected;
-        IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => null;
-        ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState => _expandCollapseState;
-
-        double IRangeValueProvider.Value => InvokeSync<IRangeValueAutomationPeer, double>(x => x.GetValue());
-        bool IRangeValueProvider.IsReadOnly => false;
-        double IRangeValueProvider.Maximum => InvokeSync<IRangeValueAutomationPeer, double>(x => x.GetMaximum());
-        double IRangeValueProvider.Minimum => InvokeSync<IRangeValueAutomationPeer, double>(x => x.GetMinimum());
-        double IRangeValueProvider.LargeChange => 1;
-        double IRangeValueProvider.SmallChange => 1;
-
-        double IScrollProvider.HorizontalScrollPercent
-        {
-            get => InvokeSync<IScrollableAutomationPeer, double>(
-                x => x.GetOffset().X * 100 / (x.GetExtent().Width - x.GetViewport().Width));
-        }
-
-        double IScrollProvider.VerticalScrollPercent
-        {
-            get => InvokeSync<IScrollableAutomationPeer, double>(
-                x => x.GetOffset().Y * 100 / (x.GetExtent().Height - x.GetViewport().Height));
-        }
-
-        double IScrollProvider.HorizontalViewSize
-        {
-            get
-            {
-                return InvokeSync<IScrollableAutomationPeer, double>(x =>
-                {
-                    if (MathUtilities.IsZero(x.GetExtent().Width))
-                        return 100;
-                    return Math.Min(100, x.GetViewport().Width / x.GetExtent().Width);
-                });
-            }
-        }
-
-        double IScrollProvider.VerticalViewSize
-        {
-            get
-            {
-                return InvokeSync<IScrollableAutomationPeer, double>(x =>
-                {
-                    if (MathUtilities.IsZero(x.GetExtent().Height))
-                        return 100;
-                    return Math.Min(100, x.GetViewport().Height / x.GetExtent().Height);
-                });
-            }
-        }
-        bool IScrollProvider.HorizontallyScrollable
-        {
-            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.GetExtent().Width > x.GetViewport().Width);
-        }
-
-        bool IScrollProvider.VerticallyScrollable
-        {
-            get => InvokeSync<IScrollableAutomationPeer, bool>(x => x.GetExtent().Height > x.GetViewport().Height);
-        }
-
-        ToggleState IToggleProvider.ToggleState
-        {
-            get
-            {
-                return InvokeSync<IToggleableAutomationPeer, bool?>(x => x.GetToggleState()) switch
-                {
-                    true => ToggleState.On,
-                    false => ToggleState.Off,
-                    null => ToggleState.Indeterminate,
-                };
-            }
-        }
-
-        string? IValueProvider.Value => InvokeSync<IStringValueAutomationPeer, string?>(x => x.GetValue());
-        bool IValueProvider.IsReadOnly => false;
 
         public void Dispose()
         {
@@ -306,75 +216,7 @@ namespace Avalonia.Win32.Automation
         IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots() => null;
         void IRawElementProviderSimple2.ShowContextMenu() => InvokeSync(() => Peer.ShowContextMenu());
 
-        void IExpandCollapseProvider.Expand() => InvokeSync<IOpenCloseAutomationPeer>(x => x.Open());
-        void IExpandCollapseProvider.Collapse() => InvokeSync<IOpenCloseAutomationPeer>(x => x.Close());
         void IInvokeProvider.Invoke() => InvokeSync<IInvocableAutomationPeer>(x => x.Invoke());
-        IRawElementProviderSimple[] ISelectionProvider.GetSelection() => _selection ?? Array.Empty<IRawElementProviderSimple>();
-        void ISelectionItemProvider.Select() => InvokeSync<ISelectableAutomationPeer>(x => x.Select());
-        void ISelectionItemProvider.AddToSelection() => InvokeSync<ISelectableAutomationPeer>(x => x.AddToSelection());
-        void ISelectionItemProvider.RemoveFromSelection() => InvokeSync<ISelectableAutomationPeer>(x => x.RemoveFromSelection());
-
-
-        void IScrollProvider.Scroll(ScrollAmount horizontalAmount, ScrollAmount verticalAmount)
-        {
-            switch (verticalAmount)
-            {
-                case ScrollAmount.LargeDecrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.PageUp());
-                    break;
-                case ScrollAmount.SmallDecrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.LineUp());
-                    break;
-                case ScrollAmount.SmallIncrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.LineDown());
-                    break;
-                case ScrollAmount.LargeIncrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.PageDown());
-                    break;
-            }
-
-            switch (horizontalAmount)
-            {
-                case ScrollAmount.LargeDecrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.PageLeft());
-                    break;
-                case ScrollAmount.SmallDecrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.LineLeft());
-                    break;
-                case ScrollAmount.SmallIncrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.LineRight());
-                    break;
-                case ScrollAmount.LargeIncrement:
-                    InvokeSync<IScrollableAutomationPeer>(x => x.PageRight());
-                    break;
-            }
-        }
-
-        void IScrollProvider.SetScrollPercent(double horizontalPercent, double verticalPercent)
-        {
-            InvokeSync<IScrollableAutomationPeer>(x =>
-            {
-                var extent = x.GetExtent();
-                var offset = x.GetOffset();
-                var viewport = x.GetViewport();
-                var sx = horizontalPercent >= 0 && horizontalPercent <= 100 ?
-                    (extent.Width - viewport.Width) * horizontalPercent :
-                    offset.X;
-                var sy = verticalPercent >= 0 && verticalPercent <= 100 ?
-                    (extent.Height - viewport.Height) * verticalPercent :
-                    offset.Y;
-                x.SetOffset(new Vector(sx, sy));
-            });
-        }
-
-        void IScrollItemProvider.ScrollIntoView()
-        {
-            InvokeSync(() => Peer.BringIntoView());
-        }
-
-        void IToggleProvider.Toggle() => InvokeSync<IToggleableAutomationPeer>(x => x.Toggle());
-
-        void IValueProvider.SetValue(string? value) => InvokeSync<IStringValueAutomationPeer>(x => x.SetValue(value));
 
         protected void InvokeSync(Action action)
         {
@@ -449,46 +291,12 @@ namespace Avalonia.Win32.Automation
             UpdateProperty(UiaPropertyId.IsKeyboardFocusable, ref _isKeyboardFocusable, Peer.IsKeyboardFocusable(), notify);
             UpdateProperty(UiaPropertyId.IsEnabled, ref _isEnabled, Peer.IsEnabled(), notify);
             UpdateProperty(UiaPropertyId.Name, ref _name, Peer.GetName(), notify);
-
-            if (Peer is ISelectingAutomationPeer selectionPeer)
-            {
-                var selection = selectionPeer.GetSelection();
-                var selectionMode = selectionPeer.GetSelectionMode();
-
-                UpdateProperty(
-                    UiaPropertyId.SelectionCanSelectMultiple,
-                    ref _canSelectMultiple, 
-                    selectionMode.HasFlagCustom(SelectionMode.Multiple),
-                    notify);
-                UpdateProperty(
-                    UiaPropertyId.SelectionIsSelectionRequired,
-                    ref _isSelectionRequired,
-                    selectionMode.HasFlagCustom(SelectionMode.AlwaysSelected),
-                    notify);
-                UpdateProperty(
-                    UiaPropertyId.SelectionSelection,
-                    ref _selection,
-                    selection.Select(x => (IRawElementProviderSimple)x.PlatformImpl!).ToArray(),
-                    notify);
-            }
-
-            if (Peer is ISelectableAutomationPeer selectablePeer)
-            {
-                UpdateProperty(
-                    UiaPropertyId.SelectionItemIsSelected,
-                    ref _isSelected,
-                    selectablePeer.GetIsSelected(),
-                    notify);
-            }
-
-            if (Peer is IOpenCloseAutomationPeer openClosePeer)
-            {
-                UpdateProperty(
-                    UiaPropertyId.ExpandCollapseExpandCollapseState,
-                    ref _expandCollapseState,
-                    openClosePeer.GetIsOpen() ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed,
-                    notify);
-            }
+            UpdateExpandCollapse(notify);
+            UpdateRangeValue(notify);
+            UpdateScroll(notify);
+            UpdateSelection(notify);
+            UpdateToggle(notify);
+            UpdateValue(notify);
         }
 
         private void UpdateProperty<T>(UiaPropertyId id, ref T _field, T value, bool notify)
@@ -563,11 +371,6 @@ namespace Avalonia.Win32.Automation
             }
 
             return null;
-        }
-
-        void IRangeValueProvider.SetValue(double value)
-        {
-            InvokeSync<IRangeValueAutomationPeer>(x => x.SetValue(value));
         }
     }
 }
