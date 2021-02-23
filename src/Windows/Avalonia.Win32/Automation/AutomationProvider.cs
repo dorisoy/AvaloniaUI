@@ -26,6 +26,7 @@ namespace Avalonia.Win32.Automation
         IRawElementProviderFragment,
         IExpandCollapseProvider,
         IInvokeProvider,
+        IRangeValueProvider,
         IScrollProvider,
         IScrollItemProvider,
         ISelectionProvider,
@@ -113,6 +114,13 @@ namespace Avalonia.Win32.Automation
         bool ISelectionItemProvider.IsSelected => _isSelected;
         IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer => null;
         ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState => _expandCollapseState;
+
+        double IRangeValueProvider.Value => InvokeSync<IRangeValueAutomationPeer, double>(x => x.GetValue());
+        bool IRangeValueProvider.IsReadOnly => false;
+        double IRangeValueProvider.Maximum => InvokeSync<IRangeValueAutomationPeer, double>(x => x.GetMaximum());
+        double IRangeValueProvider.Minimum => InvokeSync<IRangeValueAutomationPeer, double>(x => x.GetMinimum());
+        double IRangeValueProvider.LargeChange => 1;
+        double IRangeValueProvider.SmallChange => 1;
 
         double IScrollProvider.HorizontalScrollPercent
         {
@@ -218,6 +226,7 @@ namespace Avalonia.Win32.Automation
             {
                 UiaPatternId.ExpandCollapse => Peer is IOpenCloseAutomationPeer ? this : null,
                 UiaPatternId.Invoke => Peer is IInvocableAutomationPeer ? this : null,
+                UiaPatternId.RangeValue => Peer is IRangeValueAutomationPeer ? this : null,
                 UiaPatternId.Scroll => Peer is IScrollableAutomationPeer ? this : null,
                 UiaPatternId.ScrollItem => this,
                 UiaPatternId.Selection => Peer is ISelectingAutomationPeer ? this : null,
@@ -554,6 +563,11 @@ namespace Avalonia.Win32.Automation
             }
 
             return null;
+        }
+
+        void IRangeValueProvider.SetValue(double value)
+        {
+            InvokeSync<IRangeValueAutomationPeer>(x => x.SetValue(value));
         }
     }
 }
