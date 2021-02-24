@@ -138,6 +138,7 @@ namespace Avalonia.Controls.Automation.Peers
         }
 
         protected override string GetClassNameCore() => Owner.GetType().Name;
+        protected override string GetLocalizedControlTypeCore() => GetClassNameCore();
         protected override string? GetNameCore() => AutomationProperties.GetName(Owner);
 
         protected override AutomationPeer? GetParentCore()

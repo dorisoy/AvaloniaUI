@@ -46,6 +46,12 @@ namespace Avalonia.Controls.Automation.Peers
         public string GetClassName() => GetClassNameCore() ?? string.Empty;
 
         /// <summary>
+        /// Gets a human-readable localized string that represents the type of the control that is
+        /// associated with this automation peer.
+        /// </summary>
+        public string GetLocalizedControlType() => GetLocalizedControlTypeCore();
+
+        /// <summary>
         /// Gets text that describes the element that is associated with this automation peer.
         /// </summary>
         public string GetName() => GetNameCore() ?? string.Empty;
@@ -101,6 +107,7 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract int GetChildCountCore();
         protected abstract IReadOnlyList<AutomationPeer>? GetChildrenCore();
         protected abstract string GetClassNameCore();
+        protected abstract string GetLocalizedControlTypeCore();
         protected abstract string? GetNameCore();
         protected abstract AutomationPeer? GetParentCore();
         protected abstract AutomationRole GetRoleCore();

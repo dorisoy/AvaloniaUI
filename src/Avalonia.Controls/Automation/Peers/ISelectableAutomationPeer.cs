@@ -1,9 +1,11 @@
-﻿namespace Avalonia.Controls.Automation.Peers
+﻿#nullable enable
+
+namespace Avalonia.Controls.Automation.Peers
 {
     public interface ISelectableAutomationPeer
     {
         bool GetIsSelected();
-        ISelectingAutomationPeer GetSelectionContainer();
+        ISelectingAutomationPeer? GetSelectionContainer();
         void Select();
         void AddToSelection();
         void RemoveFromSelection();

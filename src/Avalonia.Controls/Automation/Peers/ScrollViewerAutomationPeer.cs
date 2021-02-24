@@ -19,5 +19,7 @@
         public void PageLeft() => (Owner as ScrollViewer)?.PageLeft();
         public void PageRight() => (Owner as ScrollViewer)?.PageRight();
         public void PageUp() => (Owner as ScrollViewer)?.PageUp();
+
+        protected override string GetLocalizedControlTypeCore() => "scroll viewer";
     }
 }

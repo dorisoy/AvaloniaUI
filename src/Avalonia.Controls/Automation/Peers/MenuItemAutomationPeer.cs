@@ -9,6 +9,8 @@ namespace Avalonia.Controls.Automation.Peers
         { 
         }
 
+        protected override string GetLocalizedControlTypeCore() => "menu item";
+
         protected override string? GetNameCore()
         {
             var result = base.GetNameCore();

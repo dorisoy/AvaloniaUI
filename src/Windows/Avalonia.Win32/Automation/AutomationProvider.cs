@@ -25,6 +25,7 @@ namespace Avalonia.Win32.Automation
         IInvokeProvider
     {
         private readonly UiaControlTypeId _controlType;
+        private readonly string _localizedControlType;
         private readonly bool _isControlElement;
         private readonly WeakReference<AutomationPeer> _peer;
         private readonly WindowImpl _visualRoot;
@@ -52,6 +53,7 @@ namespace Avalonia.Win32.Automation
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = controlType;
+            _localizedControlType = peer.GetLocalizedControlType();
             _isControlElement = isControlElement;
             _visualRoot = visualRoot ?? throw new ArgumentNullException(nameof(visualRoot));
             _fragmentRoot = fragmentRoot ?? throw new ArgumentNullException(nameof(fragmentRoot));
@@ -64,6 +66,7 @@ namespace Avalonia.Win32.Automation
 
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = UiaControlTypeId.Window;
+            _localizedControlType = peer.GetLocalizedControlType();
             _isControlElement = true;
             _visualRoot = visualRoot;
             _fragmentRoot = (IRawElementProviderFragmentRoot)this;
@@ -164,7 +167,7 @@ namespace Avalonia.Win32.Automation
                 UiaPropertyId.IsControlElement => _isControlElement,
                 UiaPropertyId.IsEnabled => _isEnabled,
                 UiaPropertyId.IsKeyboardFocusable => _isKeyboardFocusable,
-                UiaPropertyId.LocalizedControlType => _controlType.ToString().ToLowerInvariant(),
+                UiaPropertyId.LocalizedControlType => _localizedControlType,
                 UiaPropertyId.Name => _name,
                 UiaPropertyId.ProcessId => Process.GetCurrentProcess().Id,
                 UiaPropertyId.RuntimeId => _runtimeId,

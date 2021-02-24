@@ -67,5 +67,7 @@ namespace Avalonia.Controls.Automation.Peers
                     selectionModel.Deselect(index);
             }
         }
+
+        protected override string GetLocalizedControlTypeCore() => "list item";
     }
 }

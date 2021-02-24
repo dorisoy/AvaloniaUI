@@ -18,5 +18,7 @@ namespace Avalonia.Controls.Automation.Peers
             EnsureEnabled();
             (Owner as ToggleButton)?.PerformClick();
         }
+
+        protected override string GetLocalizedControlTypeCore() => "toggle button";
     }
 }

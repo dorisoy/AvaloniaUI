@@ -33,6 +33,8 @@ namespace Avalonia.Controls.Automation.Peers
             return null;
         }
 
+        protected override string GetLocalizedControlTypeCore() => "combo box";
+
         protected override void OwnerPropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)
         {
             base.OwnerPropertyChanged(sender, e);
