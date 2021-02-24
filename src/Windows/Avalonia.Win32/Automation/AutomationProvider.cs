@@ -45,7 +45,6 @@ namespace Avalonia.Win32.Automation
         public AutomationProvider(
             AutomationPeer peer,
             UiaControlTypeId controlType,
-            bool isControlElement,
             WindowImpl visualRoot,
             IRawElementProviderFragmentRoot fragmentRoot)
         {
@@ -54,7 +53,7 @@ namespace Avalonia.Win32.Automation
             _peer = new WeakReference<AutomationPeer>(peer ?? throw new ArgumentNullException(nameof(peer)));
             _controlType = controlType;
             _localizedControlType = peer.GetLocalizedControlType();
-            _isControlElement = isControlElement;
+            _isControlElement = peer.IsControlElement();
             _visualRoot = visualRoot ?? throw new ArgumentNullException(nameof(visualRoot));
             _fragmentRoot = fragmentRoot ?? throw new ArgumentNullException(nameof(fragmentRoot));
             _runtimeId = new int[] { 3, Peer.GetHashCode() };

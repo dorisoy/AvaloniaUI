@@ -102,7 +102,6 @@ namespace Avalonia.Controls.UnitTests.Automation
             var root = new AutomationTestRoot(panel);
             var target = ControlAutomationPeer.GetOrCreatePeer(panel);
             var children = target.GetChildren();
-            var toRemove = children[1];
 
             Assert.Equal(2, children.Count);
 
@@ -110,6 +109,26 @@ namespace Avalonia.Controls.UnitTests.Automation
 
             children = target.GetChildren();
             Assert.Equal(1, children.Count);
+        }
+
+        [Fact]
+        public void Exposes_Children_In_Control_Templates_With_IsControl_False()
+        {
+            var button = new Button
+            {
+                Template = new FuncControlTemplate<Button>((x, _) => new Border()),
+            };
+
+            button.ApplyTemplate();
+
+            var root = new AutomationTestRoot(button);
+            var target = ControlAutomationPeer.GetOrCreatePeer(button);
+            var children = target.GetChildren();
+
+            Assert.Equal(1, children.Count);
+            Assert.IsType<Border>(((ControlAutomationPeer)children[0]).Owner);
+            Assert.True(target.IsControlElement());
+            Assert.False(children[0].IsControlElement());
         }
 
         public class PlatformImpl

@@ -17,6 +17,13 @@ namespace Avalonia.Controls.Automation.Peers
 
         public AutomationPeer? GetFocus() => GetFocusCore();
 
+        public AutomationPeer? GetPeerFromPoint(Point p)
+        {
+            return Owner.GetVisualAt(p)?
+                .FindAncestorOfType<Control>(includeSelf: true) is Control c ?
+                    GetOrCreatePeer(c) : null;
+        }
+
         protected virtual void FocusChangedCore(IInputElement? focusedElement)
         {
             // HACK: Don't send focus changed messages when application deactivates. We shouldn't

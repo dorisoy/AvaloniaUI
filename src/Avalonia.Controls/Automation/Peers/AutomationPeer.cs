@@ -63,12 +63,6 @@ namespace Avalonia.Controls.Automation.Peers
         public AutomationPeer? GetParent() => GetParentCore();
 
         /// <summary>
-        /// Gets an <see cref="AutomationPeer"/> from the specified point.
-        /// </summary>
-        /// <param name="point">The point, in window coordinates.</param>
-        public AutomationPeer? GetPeerFromPoint(Point point) => GetPeerFromPointCore(point);
-
-        /// <summary>
         /// Gets the role of the element that is associated with this automation peer.
         /// </summary>
         public AutomationRole GetRole() => GetRoleCore();
@@ -78,6 +72,12 @@ namespace Avalonia.Controls.Automation.Peers
         /// peer currently has keyboard focus.
         /// </summary>
         public bool HasKeyboardFocus() => HasKeyboardFocusCore();
+
+        /// <summary>
+        /// Gets a value that indicates whether the element is understood by the user as
+        /// interactive or as contributing to the logical structure of the control in the GUI.
+        /// </summary>
+        public bool IsControlElement() => IsControlElementCore();
 
         /// <summary>
         /// Gets a value indicating whether the control is enabled for user interaction.
@@ -112,22 +112,11 @@ namespace Avalonia.Controls.Automation.Peers
         protected abstract AutomationPeer? GetParentCore();
         protected abstract AutomationRole GetRoleCore();
         protected abstract bool HasKeyboardFocusCore();
+        protected abstract bool IsControlElementCore();
         protected abstract bool IsEnabledCore();
         protected abstract bool IsKeyboardFocusableCore();
         protected abstract void SetFocusCore();
         protected abstract bool ShowContextMenuCore();
-
-        protected virtual AutomationPeer? GetPeerFromPointCore(Point point)
-        {
-            foreach (var child in GetChildren())
-            {
-                var found = child.GetPeerFromPoint(point);
-                if (found is object)
-                    return found;
-            }
-
-            return GetBoundingRectangle().Contains(point) ? this : null;
-        }
 
         protected void EnsureEnabled()
         {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Avalonia.Controls.Automation.Peers;
-using Avalonia.VisualTree;
 using Avalonia.Win32.Interop.Automation;
 
 #nullable enable
@@ -25,8 +24,9 @@ namespace Avalonia.Win32.Automation
         public IRawElementProviderFragment? ElementProviderFromPoint(double x, double y)
         {
             var p = Owner.PointToClient(new PixelPoint((int)x, (int)y));
-            var peer = InvokeSync(() => Peer.GetPeerFromPoint(p));
-            return peer?.PlatformImpl as IRawElementProviderFragment;
+            var peer = (WindowAutomationPeer)Peer;
+            var found = InvokeSync(() => peer.GetPeerFromPoint(p));
+            return found?.PlatformImpl as IRawElementProviderFragment;
         }
 
         public override IRawElementProviderFragmentRoot FragmentRoot => this;

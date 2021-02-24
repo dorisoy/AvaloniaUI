@@ -9,10 +9,9 @@ namespace Avalonia.Win32.Automation
         public PopupProvider(
             AutomationPeer peer,
             UiaControlTypeId controlType,
-            bool isControlElement,
             WindowImpl visualRoot,
             IRawElementProviderFragmentRoot fragmentRoot) 
-            : base(peer, controlType, isControlElement, visualRoot, fragmentRoot)
+            : base(peer, controlType, visualRoot, fragmentRoot)
         {
         }
 

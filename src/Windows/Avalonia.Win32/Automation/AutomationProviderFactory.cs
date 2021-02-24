@@ -37,7 +37,6 @@ namespace Avalonia.Win32.Automation
             else
             {
                 var role = peer.GetRole();
-                var isControlElement = role != AutomationRole.None;
                 var uiaControlType = role switch
                 {
                     AutomationRole.Button => UiaControlTypeId.Button,
@@ -58,8 +57,8 @@ namespace Avalonia.Win32.Automation
                 };
 
                 result = peer is ControlAutomationPeer c && c.Owner is PopupRoot ?
-                    new PopupProvider(peer, uiaControlType, isControlElement, visualRoot, fragmentRoot) :
-                    new AutomationProvider(peer, uiaControlType, isControlElement, visualRoot, fragmentRoot);
+                    new PopupProvider(peer, uiaControlType, visualRoot, fragmentRoot) :
+                    new AutomationProvider(peer, uiaControlType, visualRoot, fragmentRoot);
             }
 
             var _ = result.Update(notify: false);

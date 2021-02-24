@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Avalonia.Controls.Platform;
-using Avalonia.LogicalTree;
 using Avalonia.Platform;
 using Avalonia.VisualTree;
 
@@ -15,9 +14,7 @@ namespace Avalonia.Controls.Automation.Peers
     public class ControlAutomationPeer : AutomationPeer
     {
         private readonly AutomationRole _role;
-        private readonly EventHandler<VisualTreeAttachmentEventArgs> _invalidateChildren;
         private List<AutomationPeer>? _children;
-        private List<WeakReference<Control>>? _subscribedChildren;
         private bool _childrenValid;
 
         public ControlAutomationPeer(Control owner, AutomationRole role)
@@ -25,14 +22,13 @@ namespace Avalonia.Controls.Automation.Peers
             Owner = owner ?? throw new ArgumentNullException("owner");
 
             _role = role;
-            _invalidateChildren = InvalidateStructure;
 
             owner.PropertyChanged += OwnerPropertyChanged;
             owner.AttachedToVisualTree += OwnerVisualTreeAttachedDetached;
             owner.DetachedFromVisualTree += OwnerVisualTreeAttachedDetached;
             
-            var logicalChildren = ((ILogical)owner).LogicalChildren;
-            logicalChildren.CollectionChanged += InvalidateStructure;
+            var visualChildren = ((IVisual)owner).VisualChildren;
+            visualChildren.CollectionChanged += InvalidateStructure;
         }
 
         public Control Owner { get; }
@@ -68,12 +64,12 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override int GetChildCountCore()
         {
-            var logicalChildren = ((ILogical)Owner).LogicalChildren;
+            var children = ((IVisual)Owner).VisualChildren;
             var result = 0;
 
-            foreach (var child in logicalChildren)
+            foreach (var child in children)
             {
-                if (child is Control c && ((IVisual)c).IsAttachedToVisualTree)
+                if (child is Control c)
                     ++result;
             }
 
@@ -82,47 +78,25 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override IReadOnlyList<AutomationPeer>? GetChildrenCore()
         {
-            var logicalChildren = ((ILogical)Owner).LogicalChildren;
+            var children = ((IVisual)Owner).VisualChildren;
 
             if (!_childrenValid)
             {
-                if (_children is null && logicalChildren.Count > 0)
-                    _children = new List<AutomationPeer>();
-
-                if (_subscribedChildren is object)
-                {
-                    foreach (var c in _subscribedChildren)
-                    {
-                        if (c.TryGetTarget(out var target))
-                        {
-                            target.AttachedToVisualTree -= _invalidateChildren;
-                            target.DetachedFromVisualTree -= _invalidateChildren;
-                        }
-                    }
-
-                    _subscribedChildren.Clear();
-                }
+                if (children.Count > 0)
+                    _children ??= new List<AutomationPeer>();
 
                 var i = -1;
 
-                foreach (var child in logicalChildren)
+                foreach (var child in children)
                 {
                     if (child is Control c)
                     {
-                        if (((IVisual)c).IsAttachedToVisualTree)
-                        {
-                            var peer = GetOrCreatePeer(c);
+                        var peer = GetOrCreatePeer(c);
 
-                            if (_children!.Count <= ++i)
-                                _children.Add(peer);
-                            else
-                                _children[i] = peer;
-                        }
-
-                        _subscribedChildren ??= new List<WeakReference<Control>>();
-                        _subscribedChildren.Add(new WeakReference<Control>(c));
-                        c.AttachedToVisualTree += _invalidateChildren;
-                        c.DetachedFromVisualTree += _invalidateChildren;
+                        if (_children!.Count <= ++i)
+                            _children.Add(peer);
+                        else
+                            _children[i] = peer;
                     }
                 }
 
@@ -143,7 +117,7 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override AutomationPeer? GetParentCore()
         {
-            return Owner.Parent switch
+            return Owner.GetVisualParent() switch
             {
                 Control c => GetOrCreatePeer(c),
                 null => null,
@@ -153,6 +127,7 @@ namespace Avalonia.Controls.Automation.Peers
 
         protected override AutomationRole GetRoleCore() => _role;
         protected override bool HasKeyboardFocusCore() => Owner.IsFocused;
+        protected override bool IsControlElementCore() => _role != AutomationRole.None && Owner.TemplatedParent is null;
         protected override bool IsEnabledCore() => Owner.IsEnabled;
         protected override bool IsKeyboardFocusableCore() => Owner.Focusable;
         protected override void SetFocusCore() => Owner.Focus();
