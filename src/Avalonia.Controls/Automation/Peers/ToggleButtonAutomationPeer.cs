@@ -4,7 +4,7 @@ using Avalonia.Controls.Primitives;
 
 namespace Avalonia.Controls.Automation.Peers
 {
-    public class ToggleButtonAutomationPeer : ButtonAutomationPeer, IToggleableAutomationPeer
+    public class ToggleButtonAutomationPeer : ContentControlAutomationPeer, IToggleableAutomationPeer
     {
         public ToggleButtonAutomationPeer(Control owner, AutomationRole role = AutomationRole.Toggle)
             : base(owner, role)
@@ -12,6 +12,11 @@ namespace Avalonia.Controls.Automation.Peers
         }
 
         bool? IToggleableAutomationPeer.GetToggleState() => Owner.GetValue(ToggleButton.IsCheckedProperty);
-        void IToggleableAutomationPeer.Toggle() => Invoke();
+
+        void IToggleableAutomationPeer.Toggle()
+        {
+            EnsureEnabled();
+            (Owner as ToggleButton)?.PerformClick();
+        }
     }
 }
